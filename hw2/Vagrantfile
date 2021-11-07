@@ -1,0 +1,119 @@
+# -*- mode: ruby -*-
+# vim: set ft=ruby :
+home_vb = ENV['VBOX_storage']
+
+MACHINES = {
+  :otuslinux => {
+        :box_name => "centos/7",
+        :ip_addr => '192.168.56.4',
+	:disks => {
+		:sata1 => {
+			:dfile => home_vb + '/VirtualBox VMs/sata1.vdi',
+			:size => 1024,
+			:port => 1
+		},
+		:sata2 => {
+                        :dfile => home_vb + '/VirtualBox VMs/sata2.vdi',
+                        :size => 2048, # Megabytes
+			:port => 2
+		},
+                :sata3 => {
+                        :dfile => home_vb + '/VirtualBox VMs/sata3.vdi',
+                        :size => 2048,
+                        :port => 3
+                },
+                :sata4 => {
+                        :dfile => home_vb + '/VirtualBox VMs/sata4.vdi',
+                        :size => 4096, # Megabytes
+                        :port => 4
+                },
+                :sata5 => {
+                        :dfile => home_vb + '/VirtualBox VMs/sata5.vdi',
+                        :size => 6044, # Megabytes
+                        :port => 5
+                },
+                :sata6 => {
+                        :dfile => home_vb + '/VirtualBox VMs/sata6.vdi',
+                        :size => 2048, # Megabytes
+                        :port => 6
+                }
+
+
+
+
+
+	}
+
+		
+  },
+}
+
+Vagrant.configure("2") do |config|
+
+  MACHINES.each do |boxname, boxconfig|
+
+      config.vm.define boxname do |box|
+
+          box.vm.box = boxconfig[:box_name]
+          box.vm.host_name = boxname.to_s
+
+          #box.vm.network "forwarded_port", guest: 3260, host: 3260+offset
+
+          box.vm.network "private_network", ip: boxconfig[:ip_addr]
+
+          box.vm.provider :virtualbox do |vb|
+            	  vb.customize ["modifyvm", :id, "--memory", "1024"]
+                  needsController = false
+		  boxconfig[:disks].each do |dname, dconf|
+			  unless File.exist?(dconf[:dfile])
+				vb.customize ['createhd', '--filename', dconf[:dfile], '--variant', 'Fixed', '--size', dconf[:size]]
+                                needsController =  true
+                          end
+
+		  end
+                  if needsController == true
+                     vb.customize ["storagectl", :id, "--name", "SATA", "--add", "sata" ]
+                     boxconfig[:disks].each do |dname, dconf|
+                         vb.customize ['storageattach', :id,  '--storagectl', 'SATA', '--port', dconf[:port], '--device', 0, '--type', 'hdd', '--medium', dconf[:dfile]]
+                     end
+                  end
+          end
+ 	  box.vm.provision "shell", inline: <<-SHELL
+	      mkdir -p ~root/.ssh
+              cp ~vagrant/.ssh/auth* ~root/.ssh
+	      yum install -y mdadm smartmontools hdparm gdisk 
+              yum install -y dosfstools
+              echo '---------------creating GPT and making 5 paritions-------------------------------'
+              #boot 512 MB############################
+              sgdisk -n 1:0:+512M /dev/sde
+              sgdisk -c 1:EFI-partition /dev/sde
+              sgdisk -t 1:ef00 /dev/sde
+              mkfs.vfat -F32 /dev/sde1
+              sgdisk -e /dev/sde  # creating gpt backup
+              echo '-----------------finishing boot partition preparation----------------'
+              echo '-----------------creating the others partitions----------------'
+              export device='/dev/sde'
+              for i in {2..6}; do echo "partioning ${i}'th disk......"; sgdisk -n ${i}:0:+512M $device ; done
+              for i in {2..6}; do echo "choosing type ${i}'th disk......"; sgdisk -t ${i}:8e00 $device ; done
+              for i in {2..6}; do echo "labeling ${i}'th disk......"; sgdisk -c ${i}:lvm-partition_${i} $device ; done
+              for i in {2..6}; do echo "$making ext4 on {i}'th disk"; mkfs.ext4 $device${i} ; done
+              echo '---------------partioning complete-----------------------'
+              yes y | mdadm --create --verbose --force /dev/md0 -l 5 -n 5 /dev/sde{2,3,4,5,6}
+              mkdir -p /etc/mdadm
+              touch /etc/mdadm/mdadm.conf
+              echo "DEVICE partitions" > /etc/mdadm/mdadm.conf
+              yes | mdadm --detail --scan --verbose | awk '/ARRAY/ {print}' >> /etc/mdadm/mdadm.conf
+              mkdir /raid
+              chown -R vagrant /raid
+
+
+  	  SHELL
+         box.vm.provision :shell, :inline => "echo 'I am running again------------------------------------'", run: "always"
+         box.vm.provision "shell",run: "always", inline: <<-SHELL
+              echo '---------------xxxxxxxxxxxxxxxxxxxxxx--------------------------------'
+              whoami
+  	  SHELL
+
+      end
+  end
+end
