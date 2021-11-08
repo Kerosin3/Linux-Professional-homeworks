@@ -82,33 +82,38 @@ Vagrant.configure("2") do |config|
 	      mkdir -p ~root/.ssh
               cp ~vagrant/.ssh/auth* ~root/.ssh
 	      yum install -y mdadm smartmontools hdparm gdisk 
-              yum install -y dosfstools
-              echo '---------------creating GPT and making 5 paritions-------------------------------'
-              #boot 512 MB############################
-              sgdisk -n 1:0:+512M /dev/sde
-              sgdisk -c 1:EFI-partition /dev/sde
-              sgdisk -t 1:ef00 /dev/sde
-              mkfs.vfat -F32 /dev/sde1
-              sgdisk -e /dev/sde  # creating gpt backup
-              echo '-----------------finishing boot partition preparation----------------'
-              echo '-----------------creating the others partitions----------------'
-              export device='/dev/sde'
-              for i in {2..6}; do echo "partioning ${i}'th disk......"; sgdisk -n ${i}:0:+512M $device ; done
-              for i in {2..6}; do echo "choosing type ${i}'th disk......"; sgdisk -t ${i}:8e00 $device ; done
-              for i in {2..6}; do echo "labeling ${i}'th disk......"; sgdisk -c ${i}:lvm-partition_${i} $device ; done
-              for i in {2..6}; do echo "$making ext4 on {i}'th disk"; mkfs.ext4 $device${i} ; done
-              echo '---------------partioning complete-----------------------'
-              yes y | mdadm --create --verbose --force /dev/md0 -l 5 -n 5 /dev/sde{2,3,4,5,6}
+              yum install -y dosfstools lvm2
+              echo '---------------creating raid5------------------------'
+              mdadm --zero-superblock --force /dev/sd{b,c,d,e,f}
+              yes y | mdadm --create --verbose --force /dev/md0 -l 5 -n 5 /dev/sd{b,c,d,e,f}
+              cat /proc/mdstat
               mkdir -p /etc/mdadm
               touch /etc/mdadm/mdadm.conf
               echo "DEVICE partitions" > /etc/mdadm/mdadm.conf
               yes | mdadm --detail --scan --verbose | awk '/ARRAY/ {print}' >> /etc/mdadm/mdadm.conf
               mkdir /raid
+              mkdir -p /raid/part{boot,1,2,3,4,5,6}
               chown -R vagrant /raid
+              #echo '---------------creating GPT and making 6 paritions-------------------------------'
+              export device='/dev/md0'
+              for i in {1..6}; do echo "partioning ${i}'th disk......"; sgdisk -n ${i}:0:+512M $device ; done
+              for i in {1..6}; do echo "choosing type LVM for ${i}'th disk......"; sgdisk -t ${i}:8e00 $device ; done
+              for i in {1..6}; do echo "labeling ${i}'th disk......"; sgdisk -c ${i}:lvm-partition_${i} $device ; done
+              #for i in {1..6}; do echo "$making ext4 on {i}'th disk"; mkfs.ext4 /dev/md0/p${i} ; done
+              sgdisk -e /dev/sde
+              #echo '-----------------finishing boot partition preparation----------------'
+              echo '---------------partioning complete-----------------------'
+              #pvcreate $device 
+              #boot 512 MB############################
+              #sgdisk -n 1:0:+512M $device
+              #sgdisk -c 1:EFI-partition /dev/sde
+              #sgdisk -t 1:ef00 $device
+              #mkfs.vfat -F32 /dev/sde1
 
 
   	  SHELL
-         box.vm.provision :shell, :inline => "echo 'I am running again------------------------------------'", run: "always"
+         box.vm.provision :shell, :inline => "cat /proc/mdstat", run: "always"
+         box.vm.provision :shell, :inline => "mdadm --detail /dev/md0", run: "always"
          box.vm.provision "shell",run: "always", inline: <<-SHELL
               echo '---------------xxxxxxxxxxxxxxxxxxxxxx--------------------------------'
               whoami
