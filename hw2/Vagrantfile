@@ -81,10 +81,13 @@ Vagrant.configure("2") do |config|
  	  box.vm.provision "shell", inline: <<-SHELL
 	      mkdir -p ~root/.ssh
               cp ~vagrant/.ssh/auth* ~root/.ssh
-	      yum install -y mdadm smartmontools hdparm gdisk 
+	      yum install -y mdadm smartmontools hdparm gdisk
               yum install -y dosfstools lvm2
               echo '---------------creating raid5------------------------'
+              lsblk
+              echo '--------------------zeroing superblock----------------'
               mdadm --zero-superblock --force /dev/sd{b,c,d,e,f}
+              echo '----------------creating raid5------------------------'
               yes y | mdadm --create --verbose --force /dev/md0 -l 5 -n 5 /dev/sd{b,c,d,e,f}
               cat /proc/mdstat
               mkdir -p /etc/mdadm
@@ -96,14 +99,29 @@ Vagrant.configure("2") do |config|
               chown -R vagrant /raid
               #echo '---------------creating GPT and making 6 paritions-------------------------------'
               export device='/dev/md0'
+              export size_part='1G'
               for i in {1..6}; do echo "partioning ${i}'th disk......"; sgdisk -n ${i}:0:+512M $device ; done
               for i in {1..6}; do echo "choosing type LVM for ${i}'th disk......"; sgdisk -t ${i}:8e00 $device ; done
               for i in {1..6}; do echo "labeling ${i}'th disk......"; sgdisk -c ${i}:lvm-partition_${i} $device ; done
               #for i in {1..6}; do echo "$making ext4 on {i}'th disk"; mkfs.ext4 /dev/md0/p${i} ; done
-              sgdisk -e /dev/sde
-              #echo '-----------------finishing boot partition preparation----------------'
+              sgdisk -e $device #backup
               echo '---------------partioning complete-----------------------'
-              #pvcreate $device 
+              pvcreate /dev/md0p{1..6}
+              pvscan
+              vgcreate raid_5_test /dev/md0p{1..6}
+              vgdisplay
+              lvcreate -L 512M -n boot_part raid_5_test
+              mkfs.vfat -F32 /dev/raid_5_test/boot_part
+              lvcreate -L 1G -n some_part1 raid_5_test
+              mkfs.ext4 /dev/raid_5_test/some_part1
+              lvcreate -L 1G -n some_part2 raid_5_test
+              mkfs.ext4 /dev/raid_5_test/some_part2
+              echo '-------------mounting lvm volumes on /raid-----------------------'
+              mount /dev/raid_5_test/boot_part /raid/partboot
+              mount /dev/raid_5_test/some_part1 /raid/part1
+              mount /dev/raid_5_test/some_part2 /raid/part2
+              cd /raid/part1 
+              fallocate -l 1M somefile.data
               #boot 512 MB############################
               #sgdisk -n 1:0:+512M $device
               #sgdisk -c 1:EFI-partition /dev/sde
@@ -116,6 +134,8 @@ Vagrant.configure("2") do |config|
          box.vm.provision :shell, :inline => "mdadm --detail /dev/md0", run: "always"
          box.vm.provision "shell",run: "always", inline: <<-SHELL
               echo '---------------xxxxxxxxxxxxxxxxxxxxxx--------------------------------'
+              wgs
+              pws
               whoami
   	  SHELL
 
