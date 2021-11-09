@@ -29,14 +29,20 @@ MACHINES = {
                 },
                 :sata5 => {
                         :dfile => home_vb + '/VirtualBox VMs/sata5.vdi',
-                        :size => 6044, # Megabytes
+                        :size => 4096, # Megabytes
                         :port => 5
                 },
                 :sata6 => {
                         :dfile => home_vb + '/VirtualBox VMs/sata6.vdi',
                         :size => 2048, # Megabytes
                         :port => 6
+                },
+                :sata7 => {
+                        :dfile => home_vb + '/VirtualBox VMs/sata7.vdi',
+                        :size => 2048, # Megabytes
+                        :port => 7
                 }
+
 
 
 
@@ -83,60 +89,64 @@ Vagrant.configure("2") do |config|
               cp ~vagrant/.ssh/auth* ~root/.ssh
 	      yum install -y mdadm smartmontools hdparm gdisk
               yum install -y dosfstools lvm2
+              export device='/dev/sdb'
+              echo 'creating boot partitions on boot drive sdb'
+              sgdisk -n 0:0:+512M -t 0:ef00 -c 0:efi-boot $device
+              mkfs.vfat -F32 /dev/sdb1
+              sgdisk -e $device #backup
               echo '---------------creating raid5------------------------'
               lsblk
               echo '--------------------zeroing superblock----------------'
-              mdadm --zero-superblock --force /dev/sd{b,c,d,e,f}
+              mdadm --zero-superblock --force /dev/sd{c,d,e,f,g}
               echo '----------------creating raid5------------------------'
-              yes y | mdadm --create --verbose --force /dev/md0 -l 5 -n 5 /dev/sd{b,c,d,e,f}
+              yes y | mdadm --create --verbose --metadata=1.2 --force /dev/md0 -l 5 -n 5 /dev/sd{c,d,e,f,g}
               cat /proc/mdstat
               mkdir -p /etc/mdadm
               touch /etc/mdadm/mdadm.conf
               echo "DEVICE partitions" > /etc/mdadm/mdadm.conf
               yes | mdadm --detail --scan --verbose | awk '/ARRAY/ {print}' >> /etc/mdadm/mdadm.conf
               mkdir /raid
-              mkdir -p /raid/part{boot,1,2,3,4,5,6}
+              mkdir -p /raid/part{1,2,3,4,5,6}
               chown -R vagrant /raid
-              #echo '---------------creating GPT and making 6 paritions-------------------------------'
+              #echo '---------------creating parting 5 paritions for LVM-------------------------------'
               export device='/dev/md0'
-              export size_part='1G'
-              for i in {1..6}; do echo "partioning ${i}'th disk......"; sgdisk -n ${i}:0:+512M $device ; done
-              for i in {1..6}; do echo "choosing type LVM for ${i}'th disk......"; sgdisk -t ${i}:8e00 $device ; done
-              for i in {1..6}; do echo "labeling ${i}'th disk......"; sgdisk -c ${i}:lvm-partition_${i} $device ; done
-              #for i in {1..6}; do echo "$making ext4 on {i}'th disk"; mkfs.ext4 /dev/md0/p${i} ; done
-              sgdisk -e $device #backup
+              for i in {1..5}; do echo "partioning ${i}'th disk......"; sgdisk -n ${i}:0:+512M $device ; done
+              for i in {1..5}; do echo "choosing type LVM for ${i}'th disk......"; sgdisk -t ${i}:8e00 $device ; done
+              for i in {1..5}; do echo "labeling ${i}'th disk......"; sgdisk -c ${i}:lvm-partition_${i} $device ; done
+              #for i in {1..5}; do echo "$making ext4 on {i}'th disk"; mkfs.ext4 /dev/md0/p${i} ; done
               echo '---------------partioning complete-----------------------'
-              pvcreate /dev/md0p{1..6}
+              echo '-------------assembling LVM from created partitions.....----------------------'
+              pvcreate /dev/md0p{1..5}
               pvscan
-              vgcreate raid_5_test /dev/md0p{1..6}
+              vgcreate raid_5_test /dev/md0p{1..5}
               vgdisplay
-              lvcreate -L 512M -n boot_part raid_5_test
-              mkfs.vfat -F32 /dev/raid_5_test/boot_part
-              lvcreate -L 1G -n some_part1 raid_5_test
+              echo '--------creating LVM logical volumes---------------'
+              export name_part1='some_part1'
+              export name_part2='some_part2'
+              lvcreate -L 1G -n $name_part1 raid_5_test
               mkfs.ext4 /dev/raid_5_test/some_part1
-              lvcreate -L 1G -n some_part2 raid_5_test
+              lvcreate -L 1G -n $name_part2 raid_5_test
               mkfs.ext4 /dev/raid_5_test/some_part2
+              echo '--------adding fstab entities--------------------'
+              sed -i -e '$a\/dev/raid_5_test/some_part1     /raid/part1     ext4    defaults        0       2' /etc/fstab
+              sed -i -e '$a\/dev/raid_5_test/some_part2     /raid/part2     ext4    defaults        0       2' /etc/fstab
               echo '-------------mounting lvm volumes on /raid-----------------------'
-              mount /dev/raid_5_test/boot_part /raid/partboot
-              mount /dev/raid_5_test/some_part1 /raid/part1
-              mount /dev/raid_5_test/some_part2 /raid/part2
+              mount -a
+              #mount /dev/raid_5_test/some_part1 /raid/part1
+              #mount /dev/raid_5_test/some_part2 /raid/part2
               cd /raid/part1 
               fallocate -l 1M somefile.data
-              #boot 512 MB############################
-              #sgdisk -n 1:0:+512M $device
-              #sgdisk -c 1:EFI-partition /dev/sde
-              #sgdisk -t 1:ef00 $device
-              #mkfs.vfat -F32 /dev/sde1
-
+              mdadm --detail /dev/md0 | grep UUID
+              
 
   	  SHELL
          box.vm.provision :shell, :inline => "cat /proc/mdstat", run: "always"
          box.vm.provision :shell, :inline => "mdadm --detail /dev/md0", run: "always"
          box.vm.provision "shell",run: "always", inline: <<-SHELL
               echo '---------------xxxxxxxxxxxxxxxxxxxxxx--------------------------------'
-              wgs
-              pws
-              whoami
+              vgs
+              pvs
+              mount | grep raid
   	  SHELL
 
       end
