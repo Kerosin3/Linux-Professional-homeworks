@@ -21,7 +21,8 @@ MACHINES = {
                         :dfile => home_vb + '/VirtualBox VMs/sata3_raid1_hw.vdi',
                         :size => 10000, # Megabytes
                         :port => 3
-                  }
+                }
+
 
 
 	}
@@ -63,14 +64,19 @@ Vagrant.configure("2") do |config|
  	  box.vm.provision "shell", inline: <<-SHELL
 	      mkdir -p ~root/.ssh
               cp ~vagrant/.ssh/auth* ~root/.ssh
-	      yum install -y mdadm smartmontools hdparm gdisk
+	      yum install -y mdadm smartmontools hdparm gdisk rng-tools
               yum install -y dosfstools lvm2 grub2 grub2-efi-x64-modules mc efibootmgr efivar
-              modprobe efivars
               export device='/dev/sdb' #second drive!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
               lsblk
+              #swapoff -v /swapfile
+              #rm -f /swapfile
+              #mkdir /var/log/journal
+              #systemd-tmpfiles --create --prefix /var/log/journal
+              systemctl restart systemd-journald
               echo 'creating boot pairtitions on boot drive sdb'
-              sgdisk -n 0:0:+600M -t 0:ef02 -c 0:bios-boot $device
-              mkfs.vfat -F32 /${device}1
+              sgdisk -n 0:0:+1M -t 0:ef02 -c 0:bios-boot $device
+              sgdisk -n 0:0:+512M -t 0:8300 -c 0:boot $device 
+              mkfs.ext4 /${device}2
               #sgdisk -e $device #backup
               echo '---------------creating raid5------------------------'
               lsblk
@@ -87,6 +93,7 @@ Vagrant.configure("2") do |config|
               mkdir -p /etc/mdadm
               touch /etc/mdadm/mdadm.conf
               echo "DEVICE partitions" > /etc/mdadm/mdadm.conf
+              mdadm --detail --scan >> /etc/mdadm/mdadm.conf
               mkfs.ext4 /dev/md0
               echo '-----------------------moving system---------------------------'
               mount /dev/md0 /mnt
@@ -94,14 +101,15 @@ Vagrant.configure("2") do |config|
               echo '................copying base folders.........'
               mkdir /mnt/boot
               echo 'mount boot folder'
-              mount /dev/sdb1 /mnt/boot
-              rsync -ax --delete --exclude=dev --exclude=swapfile --exclude=/home/*/gfvs --exclude=/lib/modules/*/volatile --exclude=mnt --exclude=proc --exclude=sys  / /mnt/
+              mount /dev/sdb2 /mnt/boot
+              cp /boot/* /mnt/boot/
+              rsync -ax --delete --exclude=dev  --exclude=/home/*/gfvs --exclude=/lib/modules/*/volatile --exclude=mnt --exclude=proc --exclude=sys  --exclude=boot / /mnt/
               echo 'copying system done'
 
               echo '-----------------------disk syncing....----------------------------'
               cd /mnt/
               set -m
-              mkdir -p dev/ mnt/ proc/ run/ sys/ 
+              mkdir -p dev/ mnt/ proc/ run/ sys/
               #mkdir -p /mnt/sys/dev/block
               mount --rbind /sys /mnt/sys/
               for i in /lib/modules/*/volatile ; do mkdir -p /mnt/$i ; done
@@ -110,19 +118,19 @@ Vagrant.configure("2") do |config|
               echo '----------------------- chrooting-----------------------------'
               #chroot /mnt
               #uuid_raid="$(blkid -s UUID -o value /dev/md0)" #exporting uuid
-              #uuid_boot="$(blkid -s UUID -o value /dev/sdb1)"
+              #uuid_boot="$(blkid -s UUID -o value /dev/sdb2)"
               #echo 'modifying fstab'
               #cat /dev/null > /etc/fstab
               #grep -q 'boot' /etc/fstab ||  printf '# boot\nUUID=boot_uuid    /boot    vfat    rw,relatime    0    2\n' >> /etc/fstab
               #sed -i -e "s|boot_uuid|$uuid_boot|" /etc/fstab 
               #grep -q 'main_folder' /etc/fstab ||  printf '# main_folder\nUUID=raid_uuid    /    ext4    defaults    0    2\n' >> /etc/fstab
               #sed -i -e "s|raid_uuid|$uuid_raid|" /etc/fstab 
+              #dracut -f /boot/initramfs-3.10.0-1127.el7.x86_64.img $(uname -r)
               #grub2-install --target=x86_64-efi --efi-directory=/boot/efi  --bootloader-id=grub /dev/sdb
-             # #yum -y install kernel
-              #yum -y reinstall kernel 
-              dracut -f
-              grub2-install --target=i386-pc /dev/sdb
-              grub2-mkconfig -o /boot/grub2/grub.cfg
+              #yum -y install kernel
+              #dracut -f
+              #grub2-install --target=i386-pc /dev/sdb
+              #grub2-mkconfig -o /boot/grub2/grub.cfg
 
               #------------------------------------------------------------------------#
               
