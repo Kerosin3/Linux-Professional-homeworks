@@ -87,7 +87,7 @@ Vagrant.configure("2") do |config|
               sysctl -w dev.raid.speed_limit_min=500000
               sysctl -w dev.raid.speed_limit_max=5000000
               echo 'disk syncing........................'
-              yes y | mdadm --create --verbose --metadata=1.2 --force /dev/md0 -l 1 -n 2 /dev/sd{c,d}
+              yes y | mdadm --create --verbose --metadata=0.9 --force /dev/md0 -l 1 -n 2 /dev/sd{c,d}
               mdadm --wait /dev/md0
               cat /proc/mdstat
               mkdir -p /etc/mdadm
@@ -119,7 +119,7 @@ Vagrant.configure("2") do |config|
               cd /home/vagrant
               wget https://raw.githubusercontent.com/Kerosin3/linux_hw/main/hw2/raid1/chrooting.sh
               chmod +x chrooting.sh
-              ./chrooting.sh
+              /chrooting.sh
   	  SHELL
          box.vm.provision :shell, :inline => "cat /proc/mdstat", run: "always"
          box.vm.provision :shell, :inline => "mdadm --detail /dev/md0", run: "always"
