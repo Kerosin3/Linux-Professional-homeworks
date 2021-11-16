@@ -18,5 +18,5 @@ cat /etc/fstab
 dracut -f /boot/initramfs-3.10.0-1127.el7.x86_64.img $(uname -r)
 #grub2-install --target=x86_64-efi --efi-directory=/boot/efi  --bootloader-id=grub /dev/sdb
 #yum -y install kernel
-grub2-install --target=i386-pc /dev/sdb
-grub2-mkconfig -o /boot/grub2/grub.cfg
+#grub2-install --target=i386-pc /dev/sdb
+#grub2-mkconfig -o /boot/grub2/grub.cfg
