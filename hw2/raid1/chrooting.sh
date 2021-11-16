@@ -12,7 +12,7 @@ cat /etc/fstab
 echo '--------------------------------------------'
 #rm -f /etc/fstab
 #touch /etc/fstab
-grep -q 'boot' /etc/fstab ||  printf '# boot\nUUID=boot_uuid    /boot    vfat    rw,relatime    0    2\n' >> /etc/fstab
+grep -q 'boot' /etc/fstab ||  printf '# boot\nUUID=boot_uuid    /boot    ext4    rw,relatime    0    2\n' >> /etc/fstab
 sed -i -e "s|boot_uuid|$uuid_boot|" /etc/fstab
 grep -q 'main_folder' /etc/fstab ||  printf '# main_folder\nUUID=raid_uuid    /    ext4    defaults    0    2\n' >> /etc/fstab
 sed -i -e "s|raid_uuid|$uuid_raid|" /etc/fstab
@@ -23,5 +23,9 @@ echo 'GRUB_CMDLINE_LINUX="rd.auto=1 rd.shell=1 rd.debug=1"' >> /etc/default/grub
 dracut -f --mdadmconf /boot/initramfs-3.10.0-1127.el7.x86_64.img $(uname -r)
 #grub2-install --target=x86_64-efi --efi-directory=/boot/efi  --bootloader-id=grub /dev/sdb
 #yum -y install kernel
-grub2-install --target=i386-pc /dev/sdb
-grub2-mkconfig -o /boot/grub2/grub.cfg
+echo 'now you have to edit fstab'
+#grub2-install --target=i386-pc /dev/sdb
+#grub2-mkconfig -o /boot/grub2/grub.cfg
+echo '-------make sure you updated sudo password----------!!!!!!!!!!!!!!!!'
+#failed to start user login slice scope
+#failed to get d-bus connection operation not permitted centos7 vagrant chroot
