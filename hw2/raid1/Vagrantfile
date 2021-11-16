@@ -66,8 +66,10 @@ Vagrant.configure("2") do |config|
               cp ~vagrant/.ssh/auth* ~root/.ssh
 	      yum install -y mdadm smartmontools hdparm gdisk rng-tools wget
               yum install -y dosfstools lvm2 grub2 grub2-efi-x64-modules mc efibootmgr efivar
+	      sestatus
+	      setenforce 0
+	      sestatus
 	      sed -i '/SELINUX=enforcing/c\SELINUX=disabled' /etc/selinux/config
-	      shutdown -r now
               export device='/dev/sdb' #second drive!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
               lsblk
               #swapoff -v /swapfile
