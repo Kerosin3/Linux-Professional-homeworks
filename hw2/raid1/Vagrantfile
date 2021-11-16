@@ -67,9 +67,18 @@ Vagrant.configure("2") do |config|
 	      yum install -y mdadm smartmontools hdparm gdisk rng-tools wget
               yum install -y dosfstools lvm2 grub2 grub2-efi-x64-modules mc efibootmgr efivar
 	      sestatus
+              echo 'turning selinux....................'
 	      setenforce 0
 	      sestatus
 	      sed -i '/SELINUX=enforcing/c\SELINUX=disabled' /etc/selinux/config
+          SHELL
+
+
+          box.vm.provision :reload
+
+ 	  box.vm.provision "shell", inline: <<-SHELL
+              echo '--------------se status is --------------------'
+              sestatus
               export device='/dev/sdb' #second drive!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
               lsblk
               #swapoff -v /swapfile
@@ -127,13 +136,14 @@ Vagrant.configure("2") do |config|
               cp chrooting.sh /mnt/home/vagrant/
               #./chrooting.sh
   	  SHELL
-         box.vm.provision :shell, :inline => "cat /proc/mdstat", run: "always"
-         box.vm.provision :shell, :inline => "mdadm --detail /dev/md0", run: "always"
-         box.vm.provision "shell",run: "always", inline: <<-SHELL
-              echo '---------------xxxxxxxxxxxxxxxxxxxxxx--------------------------------'
-              vgs
-              pvs
-  	  SHELL
+
+         #box.vm.provision :shell, :inline => "cat /proc/mdstat", run: "always"
+         #box.vm.provision :shell, :inline => "mdadm --detail /dev/md0", run: "always"
+         #box.vm.provision "shell",run: "always", inline: <<-SHELL
+         #     echo '---------------xxxxxxxxxxxxxxxxxxxxxx--------------------------------'
+         #     vgs
+         #     pvs
+  	 # SHELL
 
       end
   end
