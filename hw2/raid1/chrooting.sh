@@ -3,10 +3,11 @@
 chroot /mnt
 export uuid_raid="$(blkid -s UUID -o value /dev/md0)" #exporting uuid
 export uuid_boot="$(blkid -s UUID -o value /dev/sdb2)"
-echo 'uuid of raid is $uuid_raid'
-echo 'uuid of boot is $uuid_boot'
+echo 'uuid of raid is'  $uuid_raid
+echo 'uuid of boot is'  $uuid_boot
 echo 'modifying fstab'
 cat /etc/fstab
+echo '--------------------------------------------'
 cat /dev/null > /etc/fstab
 grep -q 'boot' /etc/fstab ||  printf '# boot\nUUID=boot_uuid    /boot    vfat    rw,relatime    0    2\n' >> /etc/fstab
 sed -i -e "s|boot_uuid|$uuid_boot|" /etc/fstab
