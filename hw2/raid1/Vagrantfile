@@ -74,7 +74,7 @@ Vagrant.configure("2") do |config|
           SHELL
 
 
-          #box.vm.provision :reload
+          #box.vm.provision :reload  --not working
 
  	  box.vm.provision "shell", inline: <<-SHELL
               echo '--------------se status is --------------------'
@@ -83,14 +83,11 @@ Vagrant.configure("2") do |config|
               lsblk
               swapoff -v /swapfile
               rm -f /swapfile
-              #mkdir /var/log/journal
-              #systemd-tmpfiles --create --prefix /var/log/journal
               systemctl restart systemd-journald
-              echo 'creating boot pairtitions on boot drive sdb'
+              echo '-------------creating boot pairtitions on boot drive sdb--------------------------------'
               sgdisk -n 0:0:+1M -t 0:ef02 -c 0:bios-boot $device
               sgdisk -n 0:0:+512M -t 0:8300 -c 0:boot $device 
               mkfs.ext4 /${device}2
-              #mkft.fat -F 32 /${device}2
               #sgdisk -e $device #backup
               echo '---------------creating raid5------------------------'
               lsblk
@@ -106,7 +103,6 @@ Vagrant.configure("2") do |config|
               cat /proc/mdstat
               mkdir -p /etc/mdadm
               touch /etc/mdadm/mdadm.conf
-              #echo "DEVICE partitions" > /etc/mdadm/mdadm.conf
               mdadm --detail --scan >> /etc/mdadm/mdadm.conf
               echo 'MAILADDR blabla123@admin.com' >> /etc/mdadm/mdadm.conf
               mkfs.ext4 /dev/md0
@@ -119,6 +115,7 @@ Vagrant.configure("2") do |config|
               echo 'mount boot folder'
               mount /dev/sdb2 /mnt/boot
               cp /boot/* /mnt/boot/
+              echo '--------------syncing the whole system--------------------------------------'
               rsync -ax --delete --exclude=dev --exclude=swapfile  --exclude=/home/*/gfvs --exclude=/lib/modules/*/volatile --exclude=mnt --exclude=proc --exclude=sys  --exclude=boot / /mnt/
               echo 'copying system done'
 
@@ -126,7 +123,6 @@ Vagrant.configure("2") do |config|
               cd /mnt/
               set -m
               mkdir -p dev/ mnt/ proc/ run/ sys/
-              #mkdir -p /mnt/sys/dev/block
               mount --rbind /sys /mnt/sys/
               for i in /lib/modules/*/volatile ; do mkdir -p /mnt/$i ; done
               mount --rbind /dev /mnt/dev
@@ -140,13 +136,13 @@ Vagrant.configure("2") do |config|
               chroot /mnt ./chrooting.sh
   	  SHELL
 
-         #box.vm.provision :shell, :inline => "cat /proc/mdstat", run: "always"
-         #box.vm.provision :shell, :inline => "mdadm --detail /dev/md0", run: "always"
-         #box.vm.provision "shell",run: "always", inline: <<-SHELL
-         #     echo '---------------xxxxxxxxxxxxxxxxxxxxxx--------------------------------'
-         #     vgs
-         #     pvs
-  	 # SHELL
+         box.vm.provision :shell, :inline => "cat /proc/mdstat", run: "always"
+         box.vm.provision :shell, :inline => "mdadm --detail /dev/md0", run: "always"
+         box.vm.provision "shell",run: "always", inline: <<-SHELL
+              echo '---------------xxxxxxxxxxxxxxxxxxxxxx--------------------------------'
+              vgs
+              pvs
+  	  SHELL
 
       end
   end

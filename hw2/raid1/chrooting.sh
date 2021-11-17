@@ -17,7 +17,6 @@ grep -q 'boot' /etc/fstab ||  printf '# boot\nUUID=boot_uuid    /boot    ext4   
 sed -i -e "s|boot_uuid|$uuid_boot|" /etc/fstab
 grep -q 'main_folder' /etc/fstab ||  printf '# main_folder\nUUID=raid_uuid    /    ext4    defaults    0    2\n' >> /etc/fstab
 sed -i -e "s|raid_uuid|$uuid_raid|" /etc/fstab
-echo '/swapfile    none    swap    sw    0   0' >> /etc/fstab
 echo 'fstab config after change.............................'
 cat /etc/fstab
 echo 'adding rd.auto ko kernel parameters'
