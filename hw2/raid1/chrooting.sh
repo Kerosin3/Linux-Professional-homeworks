@@ -1,6 +1,6 @@
 #!/bin/bash
 
-chroot /mnt
+#chroot /mnt
 echo 'copying mdadm to into /etc directory.....'
 cp /etc/mdadm/mdadm.conf /etc/mdadm.conf
 export uuid_raid="$(blkid -s UUID -o value /dev/md0)" #exporting uuid

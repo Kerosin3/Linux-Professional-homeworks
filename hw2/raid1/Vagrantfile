@@ -108,12 +108,14 @@ Vagrant.configure("2") do |config|
               touch /etc/mdadm/mdadm.conf
               #echo "DEVICE partitions" > /etc/mdadm/mdadm.conf
               mdadm --detail --scan >> /etc/mdadm/mdadm.conf
+              echo 'MAILADDR blabla123@admin.com' >> /etc/mdadm/mdadm.conf
               mkfs.ext4 /dev/md0
               echo '-----------------------moving system---------------------------'
               mount /dev/md0 /mnt
               mount | grep md0
               echo '................copying base folders.........'
               mkdir /mnt/boot
+              sync
               echo 'mount boot folder'
               mount /dev/sdb2 /mnt/boot
               cp /boot/* /mnt/boot/
@@ -133,8 +135,9 @@ Vagrant.configure("2") do |config|
               cd /home/vagrant
               wget https://raw.githubusercontent.com/Kerosin3/linux_hw/main/hw2/raid1/chrooting.sh
               chmod +x chrooting.sh
-              cp chrooting.sh /mnt/home/vagrant/
-              ./chrooting.sh
+              cp -a chrooting.sh /mnt/home/vagrant/ 
+              cp -a chrooting.sh /mnt/
+              chroot /mnt ./chrooting.sh
   	  SHELL
 
          #box.vm.provision :shell, :inline => "cat /proc/mdstat", run: "always"
