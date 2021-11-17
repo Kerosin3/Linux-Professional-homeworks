@@ -133,6 +133,7 @@ Vagrant.configure("2") do |config|
               chmod +x chrooting.sh
               cp -a chrooting.sh /mnt/home/vagrant/ 
               cp -a chrooting.sh /mnt/
+              echo '------------------chrooting........-------------------------------'
               chroot /mnt ./chrooting.sh
   	  SHELL
 
