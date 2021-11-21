@@ -1,0 +1,74 @@
+Script started on Sat 20 Nov 2021 02:00:23 PM UTC
+]0;vagrant@10:/home/vagrant[?1034h[root@10 vagrant]# yum install xfsdump
+Loaded plugins: fastestmirror
+Loading mirror speeds from cached hostfile
+ * base: mirror.docker.ru
+ * extras: mirror.docker.ru
+ * updates: mirror.docker.ru
+Resolving Dependencies
+--> Running transaction check
+---> Package xfsdump.x86_64 0:3.1.7-1.el7 will be installed
+--> Processing Dependency: attr >= 2.0.0 for package: xfsdump-3.1.7-1.el7.x86_64
+--> Running transaction check
+---> Package attr.x86_64 0:2.4.46-13.el7 will be installed
+--> Finished Dependency Resolution
+
+Dependencies Resolved
+
+==================================================================================================
+ Package               Arch                 Version                      Repository          Size
+==================================================================================================
+Installing:
+ xfsdump               x86_64               3.1.7-1.el7                  base               308 k
+Installing for dependencies:
+ attr                  x86_64               2.4.46-13.el7                base                66 k
+
+Transaction Summary
+==================================================================================================
+Install  1 Package (+1 Dependent package)
+
+Total download size: 374 k
+Installed size: 1.1 M
+Is this ok [y/d/N]: y
+Downloading packages:
+(1/2): attr-2.4.46-13.el7.x86_64.rpm                                       |  66 kB  00:00:00     
+(2/2): xfsdump-3.1.7-1.el7.x86_64.rpm                                      | 308 kB  00:00:00     
+--------------------------------------------------------------------------------------------------
+Total                                                             1.8 MB/s | 374 kB  00:00:00     
+Running transaction check
+Running transaction test
+Transaction test succeeded
+Running transaction
+  Installing : attr-2.4.46-13.el7.x86_64 [                                                  ] 1/2  Installing : attr-2.4.46-13.el7.x86_64 [###                                               ] 1/2  Installing : attr-2.4.46-13.el7.x86_64 [#########                                         ] 1/2  Installing : attr-2.4.46-13.el7.x86_64 [#############                                     ] 1/2  Installing : attr-2.4.46-13.el7.x86_64 [###############                                   ] 1/2  Installing : attr-2.4.46-13.el7.x86_64 [####################                              ] 1/2  Installing : attr-2.4.46-13.el7.x86_64 [#####################                             ] 1/2  Installing : attr-2.4.46-13.el7.x86_64 [#########################                         ] 1/2  Installing : attr-2.4.46-13.el7.x86_64 [##########################                        ] 1/2  Installing : attr-2.4.46-13.el7.x86_64 [###############################                   ] 1/2  Installing : attr-2.4.46-13.el7.x86_64 [################################                  ] 1/2  Installing : attr-2.4.46-13.el7.x86_64 [#################################                 ] 1/2  Installing : attr-2.4.46-13.el7.x86_64 [###################################               ] 1/2  Installing : attr-2.4.46-13.el7.x86_64 [#####################################             ] 1/2  Installing : attr-2.4.46-13.el7.x86_64 [######################################            ] 1/2  Installing : attr-2.4.46-13.el7.x86_64 [########################################          ] 1/2  Installing : attr-2.4.46-13.el7.x86_64 [##########################################        ] 1/2  Installing : attr-2.4.46-13.el7.x86_64 [###########################################       ] 1/2  Installing : attr-2.4.46-13.el7.x86_64 [#############################################     ] 1/2  Installing : attr-2.4.46-13.el7.x86_64 [###############################################   ] 1/2  Installing : attr-2.4.46-13.el7.x86_64 [################################################  ] 1/2  Installing : attr-2.4.46-13.el7.x86_64 [################################################# ] 1/2  Installing : attr-2.4.46-13.el7.x86_64                                                      1/2 
+  Installing : xfsdump-3.1.7-1.el7.x86_64 [                                                 ] 2/2  Installing : xfsdump-3.1.7-1.el7.x86_64 [##                                               ] 2/2  Installing : xfsdump-3.1.7-1.el7.x86_64 [######                                           ] 2/2  Installing : xfsdump-3.1.7-1.el7.x86_64 [#########                                        ] 2/2  Installing : xfsdump-3.1.7-1.el7.x86_64 [############                                     ] 2/2  Installing : xfsdump-3.1.7-1.el7.x86_64 [##############                                   ] 2/2  Installing : xfsdump-3.1.7-1.el7.x86_64 [##################                               ] 2/2  Installing : xfsdump-3.1.7-1.el7.x86_64 [#####################                            ] 2/2  Installing : xfsdump-3.1.7-1.el7.x86_64 [########################                         ] 2/2  Installing : xfsdump-3.1.7-1.el7.x86_64 [###########################                      ] 2/2  Installing : xfsdump-3.1.7-1.el7.x86_64 [###############################                  ] 2/2  Installing : xfsdump-3.1.7-1.el7.x86_64 [##################################               ] 2/2  Installing : xfsdump-3.1.7-1.el7.x86_64 [####################################             ] 2/2  Installing : xfsdump-3.1.7-1.el7.x86_64 [#####################################            ] 2/2  Installing : xfsdump-3.1.7-1.el7.x86_64 [######################################           ] 2/2  Installing : xfsdump-3.1.7-1.el7.x86_64 [#######################################          ] 2/2  Installing : xfsdump-3.1.7-1.el7.x86_64 [##########################################       ] 2/2  Installing : xfsdump-3.1.7-1.el7.x86_64 [###########################################      ] 2/2  Installing : xfsdump-3.1.7-1.el7.x86_64 [##############################################   ] 2/2  Installing : xfsdump-3.1.7-1.el7.x86_64 [###############################################  ] 2/2  Installing : xfsdump-3.1.7-1.el7.x86_64 [################################################ ] 2/2  Installing : xfsdump-3.1.7-1.el7.x86_64                                                     2/2 
+  Verifying  : attr-2.4.46-13.el7.x86_64                                                      1/2 
+  Verifying  : xfsdump-3.1.7-1.el7.x86_64                                                     2/2 
+
+Installed:
+  xfsdump.x86_64 0:3.1.7-1.el7                                                                    
+
+Dependency Installed:
+  attr.x86_64 0:2.4.46-13.el7                                                                     
+
+Complete!
+]0;vagrant@10:/home/vagrant[root@10 vagrant]# lsblk
+NAME                    MAJ:MIN RM  SIZE RO TYPE MOUNTPOINT
+sda                       8:0    0   40G  0 disk 
+├─sda1                    8:1    0    1M  0 part 
+├─sda2                    8:2    0    1G  0 part /boot
+└─sda3                    8:3    0   39G  0 part 
+  ├─VolGroup00-LogVol00 253:0    0 37.5G  0 lvm  /
+  └─VolGroup00-LogVol01 253:1    0  1.5G  0 lvm  [SWAP]
+sdb                       8:16   0   10G  0 disk 
+sdc                       8:32   0    2G  0 disk 
+sdd                       8:48   0    1G  0 disk 
+sde                       8:64   0    1G  0 disk 
+]0;vagrant@10:/home/vagrant[root@10 vagrant]# pvcreate /dev/sda3 sd[K[K[K[K[K[K[Ksdb
+  Physical volume "/dev/sdb" successfully created.
+]0;vagrant@10:/home/vagrant[root@10 vagrant]# vgcreate vg[K[Ktmp_vg /dev/sdb
+  Volume group "tmp_vg" successfully created
+]0;vagrant@10:/home/vagrant[root@10 vagrant]# vgcreate tmp_vg /dev/sdb^C
+]0;vagrant@10:/home/vagrant[root@10 vagrant]# lvcreate -n tmp_t[Kroot -l 1[K+100%FREE /dev/tmp_vg/t[K[K
+  Logical volume "tmp_root" created.
+]0;vagrant@10:/home/vagrant[root@10 vagrant]# mfsx[K[K[Kf[Kkfs.ext4[K[K[K[Kxfs /dev/[K[K[K[K[K-f /dev/tmp_vg/vg[K[Ktmp_root 
+meta-data=/dev/tmp_vg/tmp_root   isize=512

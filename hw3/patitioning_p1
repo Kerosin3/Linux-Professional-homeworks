@@ -1,0 +1,121 @@
+Script started on Sat 20 Nov 2021 03:57:37 PM UTC
+]0;vagrant@10:/home/vagrant[?1034h[root@10 vagrant]# lsblk
+NAME                    MAJ:MIN RM  SIZE RO TYPE MOUNTPOINT
+sda                       8:0    0   40G  0 disk 
+├─sda1                    8:1    0    1M  0 part 
+├─sda2                    8:2    0    1G  0 part /boot
+└─sda3                    8:3    0   39G  0 part 
+  ├─VolGroup00-LogVol00 253:0    0    7G  0 lvm  /
+  └─VolGroup00-LogVol01 253:1    0  1.5G  0 lvm  [SWAP]
+sdb                       8:16   0   10G  0 disk 
+sdc                       8:32   0    2G  0 disk 
+sdd                       8:48   0    1G  0 disk 
+sde                       8:64   0    1G  0 disk 
+]0;vagrant@10:/home/vagrant[root@10 vagrant]# vgcreate mirr[K[K[K[Kvol[K[Kg_mirror /dev/sda3 /[K[K[K[Kb[Kc [K[Kd /dev/sde
+  Physical volume "/dev/sdd" successfully created.
+  Physical volume "/dev/sde" successfully created.
+  Volume group "vg_mirror" successfully created
+]0;vagrant@10:/home/vagrant[root@10 vagrant]# lvcreate -L 800M -n va_mirrorr_mirror[C[C[C[C[C[C[C vo[K[Kvg_mirror 
+  Logical volume "var_mirror" created.
+]0;vagrant@10:/home/vagrant[root@10 vagrant]# lsblk
+NAME                    MAJ:MIN RM  SIZE RO TYPE MOUNTPOINT
+sda                       8:0    0   40G  0 disk 
+├─sda1                    8:1    0    1M  0 part 
+├─sda2                    8:2    0    1G  0 part /boot
+└─sda3                    8:3    0   39G  0 part 
+  ├─VolGroup00-LogVol00 253:0    0    7G  0 lvm  /
+  └─VolGroup00-LogVol01 253:1    0  1.5G  0 lvm  [SWAP]
+sdb                       8:16   0   10G  0 disk 
+sdc                       8:32   0    2G  0 disk 
+sdd                       8:48   0    1G  0 disk 
+└─vg_mirror-var_mirror  253:2    0  800M  0 lvm  
+sde                       8:64   0    1G  0 disk 
+]0;vagrant@10:/home/vagrant[root@10 vagrant]# lv [Kremove /dev/vg_mirror/var_mirror 
+Do you really want to remove active logical volume vg_mirror/var_mirror? [y/n]: y
+  Logical volume "var_mirror" successfully removed
+]0;vagrant@10:/home/vagrant[root@10 vagrant]# lvremove /dev/vg_mirror/var_mirror [C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[Csblk[Kvcreate -L 800M -n var_mirror vg_mirror [C[1@-[1@m[1@1[1@ 
+  Logical volume "var_mirror" created.
+]0;vagrant@10:/home/vagrant[root@10 vagrant]# lsblk
+NAME                            MAJ:MIN RM  SIZE RO TYPE MOUNTPOINT
+sda                               8:0    0   40G  0 disk 
+├─sda1                            8:1    0    1M  0 part 
+├─sda2                            8:2    0    1G  0 part /boot
+└─sda3                            8:3    0   39G  0 part 
+  ├─VolGroup00-LogVol00         253:0    0    7G  0 lvm  /
+  └─VolGroup00-LogVol01         253:1    0  1.5G  0 lvm  [SWAP]
+sdb                               8:16   0   10G  0 disk 
+sdc                               8:32   0    2G  0 disk 
+sdd                               8:48   0    1G  0 disk 
+├─vg_mirror-var_mirror_rmeta_0  253:2    0    4M  0 lvm  
+│ └─vg_mirror-var_mirror        253:6    0  800M  0 lvm  
+└─vg_mirror-var_mirror_rimage_0 253:3    0  800M  0 lvm  
+  └─vg_mirror-var_mirror        253:6    0  800M  0 lvm  
+sde                               8:64   0    1G  0 disk 
+├─vg_mirror-var_mirror_rmeta_1  253:4    0    4M  0 lvm  
+│ └─vg_mirror-var_mirror        253:6    0  800M  0 lvm  
+└─vg_mirror-var_mirror_rimage_1 253:5    0  800M  0 lvm  
+  └─vg_mirror-var_mirror        253:6    0  800M  0 lvm  
+]0;vagrant@10:/home/vagrant[root@10 vagrant]# lvrea[K[K[K[K[Klsblkvcreate -L 800M -m1 -n var_mirror vg_mirror [1P[1P[1P[1@5[1P[1@G[C[C[C[C[1P[1P[1P[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[1P[1P[1P[1P[1P[1P[1P[1P[1P[1P[1@h[1@o[1@m[1@e[C[C[C[C[C[C[C[C[C[C[C[K[KVolGroup00 
+  Logical volume "home" created.
+]0;vagrant@10:/home/vagrant[root@10 vagrant]# lsblk
+NAME                            MAJ:MIN RM  SIZE RO TYPE MOUNTPOINT
+sda                               8:0    0   40G  0 disk 
+├─sda1                            8:1    0    1M  0 part 
+├─sda2                            8:2    0    1G  0 part /boot
+└─sda3                            8:3    0   39G  0 part 
+  ├─VolGroup00-LogVol00         253:0    0    7G  0 lvm  /
+  ├─VolGroup00-LogVol01         253:1    0  1.5G  0 lvm  [SWAP]
+  └─VolGroup00-home             253:7    0    5G  0 lvm  
+sdb                               8:16   0   10G  0 disk 
+sdc                               8:32   0    2G  0 disk 
+sdd                               8:48   0    1G  0 disk 
+├─vg_mirror-var_mirror_rmeta_0  253:2    0    4M  0 lvm  
+│ └─vg_mirror-var_mirror        253:6    0  800M  0 lvm  
+└─vg_mirror-var_mirror_rimage_0 253:3    0  800M  0 lvm  
+  └─vg_mirror-var_mirror        253:6    0  800M  0 lvm  
+sde                               8:64   0    1G  0 disk 
+├─vg_mirror-var_mirror_rmeta_1  253:4    0    4M  0 lvm  
+│ └─vg_mirror-var_mirror        253:6    0  800M  0 lvm  
+└─vg_mirror-var_mirror_rimage_1 253:5    0  800M  0 lvm  
+  └─vg_mirror-var_mirror        253:6    0  800M  0 lvm  
+]0;vagrant@10:/home/vagrant[root@10 vagrant]# mkfs.e[Kefs [K[K[K[Kxfs -f /[K/dev/VolGroup00/home 
+meta-data=/dev/VolGroup00/home   isize=512    agcount=4, agsize=327680 blks
+         =                       sectsz=512   attr=2, projid32bit=1
+         =                       crc=1        finobt=0, sparse=0
+data     =                       bsize=4096   blocks=1310720, imaxpct=25
+         =                       sunit=0      swidth=0 blks
+naming   =version 2              bsize=4096   ascii-ci=0 ftype=1
+log      =internal log           bsize=4096   blocks=2560, version=2
+         =                       sectsz=512   sunit=0 blks, lazy-count=1
+realtime =none                   extsz=4096   blocks=0, rtextents=0
+]0;vagrant@10:/home/vagrant[root@10 vagrant]# mkfs.xfs -f /dev/VolGroup00/home [C[C[C[C[C[C[C[C[C[K[Kvg
+vga_arbiter  vg_mirror/   
+[root@10 vagrant]# mkfs.xfs -f /dev/vgm[K_mirror/var_mirror 
+meta-data=/dev/vg_mirror/var_mirror isize=512    agcount=4, agsize=51200 blks
+         =                       sectsz=512   attr=2, projid32bit=1
+         =                       crc=1        finobt=0, sparse=0
+data     =                       bsize=4096   blocks=204800, imaxpct=25
+         =                       sunit=0      swidth=0 blks
+naming   =version 2              bsize=4096   ascii-ci=0 ftype=1
+log      =internal log           bsize=4096   blocks=855, version=2
+         =                       sectsz=512   sunit=0 blks, lazy-count=1
+realtime =none                   extsz=4096   blocks=0, rtextents=0
+]0;vagrant@10:/home/vagrant[root@10 vagrant]# lsblk
+NAME                            MAJ:MIN RM  SIZE RO TYPE MOUNTPOINT
+sda                               8:0    0   40G  0 disk 
+├─sda1                            8:1    0    1M  0 part 
+├─sda2                            8:2    0    1G  0 part /boot
+└─sda3                            8:3    0   39G  0 part 
+  ├─VolGroup00-LogVol00         253:0    0    7G  0 lvm  /
+  ├─VolGroup00-LogVol01         253:1    0  1.5G  0 lvm  [SWAP]
+  └─VolGroup00-home             253:7    0    5G  0 lvm  
+sdb                               8:16   0   10G  0 disk 
+sdc                               8:32   0    2G  0 disk 
+sdd                               8:48   0    1G  0 disk 
+├─vg_mirror-var_mirror_rmeta_0  253:2    0    4M  0 lvm  
+│ └─vg_mirror-var_mirror        253:6    0  800M  0 lvm  
+└─vg_mirror-var_mirror_rimage_0 253:3    0  800M  0 lvm  
+  └─vg_mirror-var_mirror        253:6    0  800M  0 lvm  
+sde                               8:64   0    1G  0 disk 
+├─vg_mirror-var_mirror_rmeta_1  253:4    0    4M  0 lvm  
+│ └─vg_mirror-var_mirror        2

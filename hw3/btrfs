@@ -1,0 +1,235 @@
+Script started on Sun 21 Nov 2021 12:18:01 PM UTC
+]0;vagrant@10:/home/vagrant[?1034h[root@10 vagrant]# vgcreate root_tmp /dev/sda ^C
+]0;vagrant@10:/home/vagrant[root@10 vagrant]# lsblk
+NAME                            MAJ:MIN RM  SIZE RO TYPE MOUNTPOINT
+sda                               8:0    0   40G  0 disk 
+├─sda1                            8:1    0    1M  0 part 
+├─sda2                            8:2    0    1G  0 part /boot
+└─sda3                            8:3    0   39G  0 part 
+  ├─VolGroup00-LogVol00         253:0    0    7G  0 lvm  /
+  ├─VolGroup00-LogVol01         253:1    0  1.5G  0 lvm  [SWAP]
+  └─VolGroup00-home             253:2    0    5G  0 lvm  /home
+sdb                               8:16   0   10G  0 disk 
+sdc                               8:32   0    2G  0 disk 
+sdd                               8:48   0    1G  0 disk 
+├─vg_mirror-var_mirror_rmeta_0  253:3    0    4M  0 lvm  
+│ └─vg_mirror-var_mirror        253:7    0  800M  0 lvm  /var
+└─vg_mirror-var_mirror_rimage_0 253:4    0  800M  0 lvm  
+  └─vg_mirror-var_mirror        253:7    0  800M  0 lvm  /var
+sde                               8:64   0    1G  0 disk 
+├─vg_mirror-var_mirror_rmeta_1  253:5    0    4M  0 lvm  
+│ └─vg_mirror-var_mirror        253:7    0  800M  0 lvm  /var
+└─vg_mirror-var_mirror_rimage_1 253:6    0  800M  0 lvm  
+  └─vg_mirror-var_mirror        253:7    0  800M  0 lvm  /var
+]0;vagrant@10:/home/vagrant[root@10 vagrant]# vgcreate root_tmp /dev/sda [C[1P[1P[1P[1P[1P[1P[1P[1P[1@b[1@t[1@r[1@f[1@s[1@_[1@v[1@o[1@l[C[C[C[C[C[C[C[C[C[1P b 
+  Physical volume "/dev/sdb" successfully created.
+  Volume group "btrfs_vol" successfully created
+]0;vagrant@10:/home/vagrant[root@10 vagrant]# lvcreate -L 5G[K[K8G -n b[Kopt_btrfs btrfs_vol 
+WARNING: xfs signature detected on /dev/btrfs_vol/opt_btrfs at offset 0. Wipe it? [y/n]: y
+  Wiping xfs signature on /dev/btrfs_vol/opt_btrfs.
+  Logical volume "opt_btrfs" created.
+]0;vagrant@10:/home/vagrant[root@10 vagrant]# mount /dev/btrfs^C
+]0;vagrant@10:/home/vagrant[root@10 vagrant]# mkfs.vt[K[Kbtrfs /dev/b
+block/         bsg/           btrfs-control  btrfs_vol/     
+[root@10 vagrant]# mkfs.btrfs /dev/btrfsf[K
+btrfs-control  btrfs_vol/     
+[root@10 vagrant]# mkfs.btrfs /dev/btrfs_vol/opt_btrfs 
+btrfs-progs v4.9.1
+See http://btrfs.wiki.kernel.org for more information.
+
+Label:              (null)
+UUID:               4697d605-b3e7-4f49-a5da-7271a012dfff
+Node size:          16384
+Sector size:        4096
+Filesystem size:    8.00GiB
+Block group profiles:
+  Data:             single            8.00MiB
+  Metadata:         DUP             409.56MiB
+  System:           DUP               8.00MiB
+SSD detected:       no
+Incompat features:  extref, skinny-metadata
+Number of devices:  1
+Devices:
+   ID        SIZE  PATH
+    1     8.00GiB  /dev/btrfs_vol/opt_btrfs
+
+]0;vagrant@10:/home/vagrant[root@10 vagrant]# lsblk -f
+NAME                            FSTYPE      LABEL UUID                                   MOUNTPOINT
+sda                                                                                      
+├─sda1                                                                                   
+├─sda2                          xfs               570897ca-e759-4c81-90cf-389da6eee4cc   /boot
+└─sda3                          LVM2_member       vrrtbx-g480-HcJI-5wLn-4aOf-Olld-rC03AY 
+  ├─VolGroup00-LogVol00         xfs               44b528fd-308f-4dca-8fff-55d29aba47e8   /
+  ├─VolGroup00-LogVol01         swap              c39c5bed-f37c-4263-bee8-aeb6a6659d7b   [SWAP]
+  └─VolGroup00-home             xfs               33421763-5e66-48f9-ab42-a77af71ed6de   /home
+sdb                             LVM2_member       Dgi6tc-W9nP-X7lD-3uqL-cUNl-aGMV-8OIYfB 
+└─btrfs_vol-opt_btrfs           btrfs             4697d605-b3e7-4f49-a5da-7271a012dfff   
+sdc                                                                                      
+sdd                             LVM2_member       Zw01Ae-QW25-zq06-qyWd-1IHe-OPBQ-kHTazl 
+├─vg_mirror-var_mirror_rmeta_0                                                           
+│ └─vg_mirror-var_mirror        xfs               2f7fd05c-7cb6-4651-8801-82de87921e99   /var
+└─vg_mirror-var_mirror_rimage_0                                                          
+  └─vg_mirror-var_mirror        xfs               2f7fd05c-7cb6-4651-8801-82de87921e99   /var
+sde                             LVM2_member       8ncWd6-7PvE-ATLU-B0i6-TBJ7-mgxA-goudHG 
+├─vg_mirror-var_mirror_rmeta_1                                                           
+│ └─vg_mirror-var_mirror        xfs               2f7fd05c-7cb6-4651-8801-82de87921e99   /var
+└─vg_mirror-var_mirror_rimage_1                                                          
+  └─vg_mirror-var_mirror        xfs               2f7fd05c-7cb6-4651-8801-82de87921e99   /var
+]0;vagrant@10:/home/vagrant[root@10 vagrant]# mount d[K/dev/btrfs
+btrfs-control  btrfs_vol/     
+[root@10 vagrant]# mount /dev/btrfs_vol/opt_btrfs /mnt/
+]0;vagrant@10:/home/vagrant[root@10 vagrant]# btrfs subvolume create /mnt/opt
+Create subvolume '/mnt/opt'
+]0;vagrant@10:/home/vagrant[root@10 vagrant]# btrfs subvolume list /mnt/
+ID 257 gen 7 top level 5 path opt
+]0;vagrant@10:/home/vagrant[root@10 vagrant]# vi /etc/fstab 
+[?1049h[?1h=[1;38r[?12;25h[?12l[?25h[27m[m[H[2J[?25l[38;1H"/etc/fstab" 14L, 734C[2;1H#
+# /etc/fstab
+# Created by anaconda on Sat May 12 18:50:26 2018
+#
+# Accessible filesystems, by reference, are maintained under '/dev/disk'
+# See man pages fstab(5), findfs(8), mount(8) and/or blkid(8) for more info
+#
+/dev/mapper/VolGroup00-LogVol00 /[23Cxfs     defaults[8C0 0
+/dev/mapper/VolGroup00-home     /home[23Cxfs     defaults[8C0 0
+/dev/mapper/vg_mirror-var_mirror[8C/var[23Cxfs     defaults[8C0 0
+#/dev/mapper/tmp_vg-tmp_root /[23Cxfs     defaults[8C0 0
+UUID=570897ca-e759-4c81-90cf-389da6eee4cc /boot[19Cxfs     defaults[8C0 0
+/dev/mapper/VolGroup00-LogVol01 swap[20Cswap    defaults[8C0 0
+[94m~                                                                                                                                  [16;1H~                                                                                                                                  [17;1H~                                                                                                                                  [18;1H~                                                                                                                                  [19;1H~                                                                                                                                  [20;1H~                                                                                                                                  [21;1H~                                                                                                                                  [22;1H~                                                                                                                                  [23;1H~                                                                                                                                  [24;1H~                                                                                                                                  [25;1H~                                                                                                                                  [26;1H~                                                                                                                                  [27;1H~                                                                                                                                  [28;1H~                                                                                                                                  [29;1H~                                                                                                                                  [30;1H~                                                                                                                                  [31;1H~                                                                                                                                  [32;1H~                                                                                                                                  [33;1H~                                                                                                                                  [34;1H~                                                                                                                                  [35;1H~                                                                                                                                  [36;1H~                                                                                                                                  [37;1H~                                                                                                                                  [1;1H[?12l[?25h
+
+
+
+
+
+
+
+
+
+[?25l[m[38;1H[1m-- INSERT --[m[38;14H[K[12;37r[12;1H[L[1;38r[12;1H[?12l[?25h[?25l/dev/mapper/btrs_test-btrfs_vol /mnt[23Cbtrfs     rw,noatime,subvolid=257,subvol=/svol0[8C0 0[?12l[?25hsubvol=/svol00[?25l [7C0 0[12;117H[K[12;106H[?12l[?25h[?25l [7C0 0[12;116H[K[12;105H[?12l[?25h[?25l [7C0 0[12;115H[K[12;104H[?12l[?25h[?25l [7C0 0[12;114H[K[12;103H[?12l[?25h[?25l [7C0 0[12;113H[K[12;102H[?12l[?25h[?25lo[7C 0 0[12;103H[?12l[?25h[?25lp[7C 0 0[12;104H[?12l[?25h[?25lt[7C 0 0[12;105H[?12l[?25h/mnt[?25l [22Cbtrfs     rw,noatime,subvolid=257,subvol=/opt [7C0 0[12;115H[K[12;36H[?12l[?25h[?25l [22Cbtrfs     rw,noatime,subvolid=257,subvol=/opt [7C0 0[12;114H[K[12;35H[?12l[?25h[?25l [22Cbtrfs     rw,noatime,subvolid=257,subvol=/opt [7C0 0[12;113H[K[12;34H[?12l[?25h[?25lo[22C btrfs     rw,noatime,subvolid=257,subvol=/opt[7C 0 0[12;35H[?12l[?25h[?25lp[22C btrfs     rw,noatime,subvolid=257,subvol=/opt[7C 0 0[12;36H[?12l[?25h[?25lt[22C btrfs     rw,noatime,subvolid=257,subvol=/opt[7C 0 0[12;37H[?12l[?25hol [?25l /opt [22Cbtrfs     rw,noatime,subvolid=257,subvol=/opt [7C0 0[12;115H[K[12;31H[?12l[?25h[?25l /opt [22Cbtrfs     rw,noatime,subvolid=257,subvol=/opt [7C0 0[12;114H[K[12;30H[?12l[?25h[?25l /opt [22Cbtrfs     rw,noatime,subvolid=257,subvol=/opt [7C0 0[12;113H[K[12;29H[?12l[?25h[?25l /opt [22Cbtrfs     rw,noatime,subvolid=257,subvol=/opt [7C0 0[12;112H[K[12;28H[?12l[?25h[?25l /opt [22Cbtrfs     rw,noatime,subvolid=257,subvol=/opt [7C0 0[12;111H[K[12;27H[?12l[?25h[?25l /opt [22Cbtrfs     rw,noatime,subvolid=257,subvol=/opt [7C0 0[12;110H[K[12;26H[?12l[?25h[?25l /opt [22Cbtrfs     rw,noatime,subvolid=257,subvol=/opt [7C0 0[12;109H[K[12;25H[?12l[?25h[?25l /opt [22Cbtrfs     rw,noatime,subvolid=257,subvol=/opt [7C0 0[12;108H[K[12;24H[?12l[?25h[?25l /opt [22Cbtrfs     rw,noatime,subvolid=257,subvol=/opt [7C0 0[12;107H[K[12;23H[?12l[?25h[?25l /opt [22Cbtrfs     rw,noatime,subvolid=257,subvol=/opt [7C0 0[12;106H[K[12;22H[?12l[?25h[?25l /opt [22Cbtrfs     rw,noatime,subvolid=257,subvol=/opt [7C0 0[12;105H[K[12;21H[?12l[?25h[?25l /opt [22Cbtrfs     rw,noatime,subvolid=257,subvol=/opt [7C0 0[12;104H[K[12;20H[?12l[?25h[?25l /opt [22Cbtrfs     rw,noatime,subvolid=257,subvol=/opt [7C0 0[12;103H[K[12;19H[?12l[?25h[?25l /opt [22Cbtrfs     rw,noatime,subvolid=257,subvol=/opt [7C0 0[12;102H[K[12;18H[?12l[?25h[?25l /opt [22Cbtrfs     rw,noatime,subvolid=257,subvol=/opt [7C0 0[12;101H[K[12;17H[?12l[?25h[?25l /opt [22Cbtrfs     rw,noatime,subvolid=257,subvol=/opt [7C0 0[12;100H[K[12;16H[?12l[?25h[?25l /opt [22Cbtrfs     rw,noatime,subvolid=257,subvol=/opt [7C0 0[12;99H[K[12;15H[?12l[?25h[?25l /opt [22Cbtrfs     rw,noatime,subvolid=257,subvol=/opt [7C0 0[12;98H[K[12;14H[?12l[?25h[?25l /opt [22Cbtrfs     rw,noatime,subvolid=257,subvol=/opt [7C0 0[12;97H[K[12;13H[?12l[?25h[38;1H[K[12;12H[?25l[?12l[?25h[?25l[38;1H:[?12l[?25hwq
+[?25l"/etc/fstab" 15L, 831C written
+
+
+[?1l>[?12l[?25h[?1049l]0;vagrant@10:/home/vagrant[root@10 vagrant]# vi /etc/fstab 
+[?1049h[?1h=[1;38r[?12;25h[?12l[?25h[27m[m[H[2J[?25l[38;1H"/etc/fstab" 15L, 831C[2;1H#
+# /etc/fstab
+# Created by anaconda on Sat May 12 18:50:26 2018
+#
+# Accessible filesystems, by reference, are maintained under '/dev/disk'
+# See man pages fstab(5), findfs(8), mount(8) and/or blkid(8) for more info
+#
+/dev/mapper/VolGroup00-LogVol00 /[23Cxfs     defaults[8C0 0
+/dev/mapper/VolGroup00-home     /home[23Cxfs     defaults[8C0 0
+/dev/mapper/vg_mirror-var_mirror[8C/var[23Cxfs     defaults[8C0 0
+/dev/mapper/ /opt[23Cbtrfs     rw,noatime,subvolid=257,subvol=/opt[8C0 0
+#/dev/mapper/tmp_vg-tmp_root /[23Cxfs     defaults[8C0 0
+UUID=570897ca-e759-4c81-90cf-389da6eee4cc /boot[19Cxfs     defaults[8C0 0
+/dev/mapper/VolGroup00-LogVol01 swap[20Cswap    defaults[8C0 0
+[94m~                                                                                                                                  [17;1H~                                                                                                                                  [18;1H~                                                                                                                                  [19;1H~                                                                                                                                  [20;1H~                                                                                                                                  [21;1H~                                                                                                                                  [22;1H~                                                                                                                                  [23;1H~                                                                                                                                  [24;1H~                                                                                                                                  [25;1H~                                                                                                                                  [26;1H~                                                                                                                                  [27;1H~                                                                                                                                  [28;1H~                                                                                                                                  [29;1H~                                                                                                                                  [30;1H~                                                                                                                                  [31;1H~                                                                                                                                  [32;1H~                                                                                                                                  [33;1H~                                                                                                                                  [34;1H~                                                                                                                                  [35;1H~                                                                                                                                  [36;1H~                                                                                                                                  [37;1H~                                                                                                                                  [1;1H[?12l[?25h
+
+
+
+
+
+
+
+
+
+[m/dev/mapper[?25l[38;1H[1m-- INSERT --[m[38;14H[K[11;12H[?12l[?25h/vg_mirror-var_mirr[12;31H[?25lbtrfs_vol-opt_btrfs /opt                       btrfs     rw,noatime,subvolid=257,subvol=/opt[8C0 0[12;32H[?12l[?25h[?25l/opt [22Cbtrfs     rw,noatime,subvolid=257,subvol=/opt [7C0 0[12;115H[K[12;32H[?12l[?25h[?25l /opt[22C btrfs     rw,noatime,subvolid=257,subvol=/opt[7C 0 0[12;33H[?12l[?25h[38;1H[K[12;32H[?25l[?12l[?25h[?25l[38;1H:[?12l[?25hwq
+[?25l"/etc/fstab" 15L, 850C written
+
+
+[?1l>[?12l[?25h[?1049l]0;vagrant@10:/home/vagrant[root@10 vagrant]# cat /etc/fstab 
+
+#
+# /etc/fstab
+# Created by anaconda on Sat May 12 18:50:26 2018
+#
+# Accessible filesystems, by reference, are maintained under '/dev/disk'
+# See man pages fstab(5), findfs(8), mount(8) and/or blkid(8) for more info
+#
+/dev/mapper/VolGroup00-LogVol00 /                       xfs     defaults        0 0
+/dev/mapper/VolGroup00-home	/home                       xfs     defaults        0 0
+/dev/mapper/vg_mirror-var_mirror	/var                       xfs     defaults        0 0
+/dev/mapper/btrfs_vol-opt_btrfs	/opt                       btrfs     rw,noatime,subvolid=257,subvol=/opt        0 0
+#/dev/mapper/tmp_vg-tmp_root /                       xfs     defaults        0 0
+UUID=570897ca-e759-4c81-90cf-389da6eee4cc /boot                   xfs     defaults        0 0
+/dev/mapper/VolGroup00-LogVol01 swap                    swap    defaults        0 0
+]0;vagrant@10:/home/vagrant[root@10 vagrant]# umount /op[K[Kmnt/
+]0;vagrant@10:/home/vagrant[root@10 vagrant]# mount /e[Kdev/v[Kbtrfsf[K_vol/b[Kopt_btrfs /[K-o subvol=opt /opt/
+]0;vagrant@10:/home/vagrant[root@10 vagrant]# fallocate -l /op[K[K[K[K[K[K[K[K[K[K[K[K[K[K[K[Kfallocate -l 10m[KM /opt/fa[Kile1
+]0;vagrant@10:/home/vagrant[root@10 vagrant]# fallocate -l 10M /opt/file1[K2
+]0;vagrant@10:/home/vagrant[root@10 vagrant]# fallocate -l 10M /opt/file2[K3
+]0;vagrant@10:/home/vagrant[root@10 vagrant]# ls -la /opt/
+total 30720
+drwxr-xr-x.  1 root root       30 Nov 21 12:23 [0m[38;5;27m.[0m
+drwxr-xr-x. 17 root root      224 Nov 20 14:16 [38;5;27m..[0m
+-rw-r--r--.  1 root root 10485760 Nov 21 12:23 file1
+-rw-r--r--.  1 root root 10485760 Nov 21 12:23 file2
+-rw-r--r--.  1 root root 10485760 Nov 21 12:23 file3
+]0;vagrant@10:/home/vagrant[root@10 vagrant]# rm -rf op[K[K/opt/{file1,file2,file3}^C
+]0;vagrant@10:/home/vagrant[root@10 vagrant]# btrfs subvolume snapshot /opt/ /opt_snap
+ERROR: not a btrfs filesystem: /
+]0;vagrant@10:/home/vagrant[root@10 vagrant]# btrfs subvolume snapshot /opt/ /opt_snap[C[1P /opt_snap[C[C[C[C[C[C[C[C[C[C^C
+]0;vagrant@10:/home/vagrant[root@10 vagrant]# mount /dev/v[Kbtrfsf[K
+btrfs-control  btrfs_vol/     
+[root@10 vagrant]# mount /dev/btrfs_vol/opt_btrfs /mnt/
+]0;vagrant@10:/home/vagrant[root@10 vagrant]# ls -la /mnt/
+total 16
+drwxr-xr-x.  1 root root   6 Nov 21 12:19 [0m[38;5;27m.[0m
+drwxr-xr-x. 17 root root 224 Nov 20 14:16 [38;5;27m..[0m
+drwxr-xr-x.  1 root root  30 Nov 21 12:23 [38;5;27mopt[0m
+]0;vagrant@10:/home/vagrant[root@10 vagrant]# ls -la /mnt/[24@mount /dev/btrfs_vol/opt_btrfs[C[C[C[C[C[C
+[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[Cbtrfs subvolume snapshot /opt/ /opt_snap[K[K[K[K[K[K[K[Kmnt/opt_snap
+Create a snapshot of '/opt/' in '/mnt/opt_snap'
+]0;vagrant@10:/home/vagrant[root@10 vagrant]# unm[Kmount /[K[K[K[K[K[K[K[K[Kls 0-[K[K0l[K[K-la /,m[K[Kmnt/opt_snap/
+total 30736
+drwxr-xr-x. 1 root root       30 Nov 21 12:23 [0m[38;5;27m.[0m
+drwxr-xr-x. 1 root root       22 Nov 21 12:28 [38;5;27m..[0m
+-rw-r--r--. 1 root root 10485760 Nov 21 12:23 file1
+-rw-r--r--. 1 root root 10485760 Nov 21 12:23 file2
+-rw-r--r--. 1 root root 10485760 Nov 21 12:23 file3
+]0;vagrant@10:/home/vagrant[root@10 vagrant]# umount /m
+media/ mnt/   
+[root@10 vagrant]# umount /mnt/ /opt/
+]0;vagrant@10:/home/vagrant[root@10 vagrant]# umount /mnt/ /opt/ls -la /mnt/opt_snap/
+[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[Cbtrfs subvolume snapshot /opt/ /mnt/opt_snap
+[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[Cls -la /mnt/[K[24@mount /dev/btrfs_vol/opt_btrfs[C[C[C[C[C[C
+[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[Cbtrfs subvolume snapshot /opt/ /opt_snap
+[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[Cls -la /opt/[Kfallocate -l 10M /opt/file321
+[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[Cmount /dev/btrfs_vol/opt_btrfs -o subvol=opt /opt/
+]0;vagrant@10:/home/vagrant[root@10 vagrant]# rm -rf /opt/{file1,file2,file3}
+]0;vagrant@10:/home/vagrant[root@10 vagrant]# ls -la op[K[K/opt/
+total 0
+drwxr-xr-x.  1 root root   0 Nov 21 12:29 [0m[38;5;27m.[0m
+drwxr-xr-x. 17 root root 224 Nov 20 14:16 [38;5;27m..[0m
+]0;vagrant@10:/home/vagrant[root@10 vagrant]# umount .[K/opt/
+]0;vagrant@10:/home/vagrant[root@10 vagrant]# umount /opt/ls -la[C[C[C[C[C[Crm -rf /opt/{file1,file2,file3}
+[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[Cmount /dev/btrfs_vol/opt_btrfs -o subvol=opt /opt/[1P /opt/t /opt/_ /opt/s /opt/n /opt/a /opt/p /opt/
+]0;vagrant@10:/home/vagrant[root@10 vagrant]# ls -la /opt/
+total 30720
+drwxr-xr-x.  1 root root       30 Nov 21 12:23 [0m[38;5;27m.[0m
+drwxr-xr-x. 17 root root      224 Nov 20 14:16 [38;5;27m..[0m
+-rw-r--r--.  1 root root 10485760 Nov 21 12:23 file1
+-rw-r--r--.  1 root root 10485760 Nov 21 12:23 file2
+-rw-r--r--.  1 root root 10485760 Nov 21 12:23 file3
+]0;vagrant@10:/home/vagrant[root@10 vagrant]# cat /etc/fstab 
+
+#
+# /etc/fstab
+# Created by anaconda on Sat May 12 18:50:26 2018
+#
+# Accessible filesystems, by reference, are maintained under '/dev/disk'
+# See man pages fstab(5), findfs(8), mount(8) and/or blkid(8) for more info
+#
+/dev/mapper/VolGroup00-LogVol00 /                       xfs     defaults        0 0
+/dev/mapper/VolGroup00-home	/home                       xfs     defaults        0 0
+/dev/mapper/vg_mirror-var_mirror	/var                       xfs     defaults        0 0
+/dev/mapper/btrfs_vol-opt_btrfs	/opt                       btrfs     rw,noatime,subvolid=257,subvol=/opt        0 0
+#/dev/mapper/tmp_vg-tmp_root /                       xfs     defaults        0 0
+UUID=570897ca-e759-4c81-90cf-389da6eee4cc /boot                   xfs     defaults        0 0
+/dev/mapper/VolGroup00-LogVol01 swap                    swap    defaults        0 0
+]0;vagrant@10:/home/vagrant[root@10 vagrant]# exit
+exit
+
+Script done on Sun 21 Nov 2021 12:31:12 PM UTC

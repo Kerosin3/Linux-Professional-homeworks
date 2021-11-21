@@ -1,0 +1,63 @@
+Script started on Sun 21 Nov 2021 08:18:42 AM UTC
+]0;vagrant@10:/home/vagrant[?1034h[root@10 vagrant]# lsblk
+NAME                            MAJ:MIN RM  SIZE RO TYPE MOUNTPOINT
+sda                               8:0    0   40G  0 disk 
+├─sda1                            8:1    0    1M  0 part 
+├─sda2                            8:2    0    1G  0 part /boot
+└─sda3                            8:3    0   39G  0 part 
+  ├─VolGroup00-LogVol00         253:0    0    7G  0 lvm  /
+  ├─VolGroup00-LogVol01         253:1    0  1.5G  0 lvm  [SWAP]
+  └─VolGroup00-home             253:2    0    5G  0 lvm  /home
+sdb                               8:16   0   10G  0 disk 
+sdc                               8:32   0    2G  0 disk 
+sdd                               8:48   0    1G  0 disk 
+├─vg_mirror-var_mirror_rmeta_0  253:3    0    4M  0 lvm  
+│ └─vg_mirror-var_mirror        253:7    0  800M  0 lvm  /var
+└─vg_mirror-var_mirror_rimage_0 253:4    0  800M  0 lvm  
+  └─vg_mirror-var_mirror        253:7    0  800M  0 lvm  /var
+sde                               8:64   0    1G  0 disk 
+├─vg_mirror-var_mirror_rmeta_1  253:5    0    4M  0 lvm  
+│ └─vg_mirror-var_mirror        253:7    0  800M  0 lvm  /var
+└─vg_mirror-var_mirror_rimage_1 253:6    0  800M  0 lvm  
+  └─vg_mirror-var_mirror        253:7    0  800M  0 lvm  /var
+]0;vagrant@10:/home/vagrant[root@10 vagrant]# lvcreate -L 5G -s -n hone_snap[1Pe_snapme_snap[C[C[C[C[C[C /dev/VolGroup00/home
+  Logical volume "home_snap" created.
+]0;vagrant@10:/home/vagrant[root@10 vagrant]# [K[root@10 vagrant]# [K[root@10 vagrant]# [K[root@10 vagrant]# lsblk
+NAME                            MAJ:MIN RM  SIZE RO TYPE MOUNTPOINT
+sda                               8:0    0   40G  0 disk 
+├─sda1                            8:1    0    1M  0 part 
+├─sda2                            8:2    0    1G  0 part /boot
+└─sda3                            8:3    0   39G  0 part 
+  ├─VolGroup00-LogVol00         253:0    0    7G  0 lvm  /
+  ├─VolGroup00-LogVol01         253:1    0  1.5G  0 lvm  [SWAP]
+  ├─VolGroup00-home-real        253:8    0    5G  0 lvm  
+  │ ├─VolGroup00-home           253:2    0    5G  0 lvm  /home
+  │ └─VolGroup00-home_snap      253:10   0    5G  0 lvm  
+  └─VolGroup00-home_snap-cow    253:9    0    5G  0 lvm  
+    └─VolGroup00-home_snap      253:10   0    5G  0 lvm  
+sdb                               8:16   0   10G  0 disk 
+sdc                               8:32   0    2G  0 disk 
+sdd                               8:48   0    1G  0 disk 
+├─vg_mirror-var_mirror_rmeta_0  253:3    0    4M  0 lvm  
+│ └─vg_mirror-var_mirror        253:7    0  800M  0 lvm  /var
+└─vg_mirror-var_mirror_rimage_0 253:4    0  800M  0 lvm  
+  └─vg_mirror-var_mirror        253:7    0  800M  0 lvm  /var
+sde                               8:64   0    1G  0 disk 
+├─vg_mirror-var_mirror_rmeta_1  253:5    0    4M  0 lvm  
+│ └─vg_mirror-var_mirror        253:7    0  800M  0 lvm  /var
+└─vg_mirror-var_mirror_rimage_1 253:6    0  800M  0 lvm  
+  └─vg_mirror-var_mirror        253:7    0  800M  0 lvm  /var
+]0;vagrant@10:/home/vagrant[root@10 vagrant]# ls -la /home/vagrant/
+total 60
+drwx------. 3 vagrant vagrant   210 Nov 21 08:18 [0m[38;5;27m.[0m
+drwxr-xr-x. 3 root    root       21 May 12  2018 [38;5;27m..[0m
+-rw-------. 1 vagrant vagrant     9 Nov 20 14:23 .bash_history
+-rw-r--r--. 1 vagrant vagrant    18 Apr 11  2018 .bash_logout
+-rw-r--r--. 1 vagrant vagrant   193 Apr 11  2018 .bash_profile
+-rw-r--r--. 1 vagrant vagrant   231 Apr 11  2018 .bashrc
+-rw-r--r--. 1 root    root     8192 Nov 20 16:06 patitioning_p1
+-rw-r--r--. 1 root    root        0 Nov 21 08:18 snapshots_1
+drwx------. 2 vagrant vagrant    29 Nov 20 13:58 [38;5;27m.ssh[0m
+-rw-r--r--. 1 root    root     8192 Nov 20 14:01 system_shrink_p1
+-rw-r--r--. 1 root    root     2006 Nov 20 14:21 system_shrink_p3
+-rw-r--r--. 1 root    root    24311 Nov 20 14
