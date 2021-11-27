@@ -1,4 +1,5 @@
 # Task 1
+```
 root@10 vagrant]# zpool list
 NAME     SIZE  ALLOC   FREE  CKPOINT  EXPANDSZ   FRAG    CAP  DEDUP    HEALTH  ALTROOT
 test_1  1.88G   114K  1.87G        -         -     0%     0%  1.00x    ONLINE  -
@@ -61,9 +62,9 @@ test_5  compressratio         2.74x                  -
 
 
 test_3 = gzip-9  # WINNER
-
+```
 # Task 2
-
+```
 wget --load-cookies /tmp/cookies.txt "https://docs.google.com/uc?export=download&confirm=$(wget --quiet --save-cookies /tmp/cookies.txt --keep-session-cookies --no-check-certificate 'https://docs.google.com/uc?export=download&id=1KRBNW33QWqbvbVHa3hLJivOAt60yukkg' -O- | sed -rn 's/.*confirm=([0-9A-Za-z_]+).*/\1\n/p')&id=1KRBNW33QWqbvbVHa3hLJivOAt60yukkg" -O zfs_task1.tar.gz && rm -rf /tmp/cookies.txt
 
 tar -xzf zfs_task1.tar.gz 
@@ -164,9 +165,9 @@ otus  compression  zle             local
 [root@10 vagrant]# zfs get checksum otus
 NAME  PROPERTY  VALUE      SOURCE
 otus  checksum  sha256     lo
-
+```
 # Task 3
-
+```
 wget --load-cookies /tmp/cookies.txt "https://docs.google.com/uc?export=download&confirm=$(wget --quiet --save-cookies /tmp/cookies.txt --keep-session-cookies --no-check-certificate 'https://docs.google.com/uc?export=download&id=1gH8gCL9y7Nd5Ti3IRmplZPF1XjzxeRAG' -O- | sed -rn 's/.*confirm=([0-9A-Za-z_]+).*/\1\n/p')&id=1gH8gCL9y7Nd5Ti3IRmplZPF1XjzxeRAG" -O otus_task2.file && rm -rf /tmp/cookies.txt
 
 zfs receive otus/test@today < otus_task2.file 
@@ -190,3 +191,4 @@ drwxr-xr-x. 3 vagrant vagrant       4 Dec 18  2017 task1
 /otus/test/task1/file_mess/secret_message
 [root@10 file_mess]# cat /otus/test/task1/file_mess/secret_message 
 https://github.com/sindresorhus/awesome
+```
