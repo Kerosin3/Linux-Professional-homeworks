@@ -1,81 +1,105 @@
 # -*- mode: ruby -*-
-# vi: set ft=ruby :
-ENV["VAGRANT_EXPERIMENTAL"] = "disks"
+# vim: set ft=ruby :
+home_vb = ENV['VBOX_storage']
+
+MACHINES = {
+  :otuslinux => {
+         #config.vm.box = 'centos/8.4'
+         #config.vm.box_url = 'https://cloud.centos.org/centos/8/x86_64/images/CentOS-8-Vagrant-8.4.2105-20210603.0.x86_64.vagrant-virtualbox.box'
+         #config.vm.box_download_checksum = 'dfe4a34e59eb3056a6fe67625454c3607cbc52ae941aeba0498c29ee7cb9ac22'
+         #config.vm.box_download_checksum_type = 'sha256'
+         :box_name => "centos/8.4",
+        :ip_addr => '192.168.56.4',
+	:disks => {
+		:sata1 => {
+			:dfile => home_vb + '/VirtualBox VMs/sata1.vdi',
+			:size => 2048,
+			:port => 1
+		},
+		:sata2 => {
+                        :dfile => home_vb + '/VirtualBox VMs/sata2.vdi',
+                        :size => 2048, # Megabytes
+			:port => 2
+		},
+                :sata3 => {
+                        :dfile => home_vb + '/VirtualBox VMs/sata3.vdi',
+                        :size => 2048,
+                        :port => 3
+                },
+                :sata4 => {
+                        :dfile => home_vb + '/VirtualBox VMs/sata4.vdi',
+                        :size => 2048, # Megabytes
+                        :port => 4
+                },
+                :sata5 => {
+                        :dfile => home_vb + '/VirtualBox VMs/sata5.vdi',
+                        :size => 4096, # Megabytes
+                        :port => 5
+                },
+                :sata6 => {
+                        :dfile => home_vb + '/VirtualBox VMs/sata6.vdi',
+                        :size => 4096, # Megabytes
+                        :port => 6
+                },
+                :sata7 => {
+                        :dfile => home_vb + '/VirtualBox VMs/sata7.vdi',
+                        :size => 4096, # Megabytes
+                        :port => 7
+                }
+
+
+
+
+
+
+	}
+
+		
+  },
+}
 
 Vagrant.configure("2") do |config|
 
-  config.vm.box = 'centos/8.4'
-  config.vm.box_url = 'https://cloud.centos.org/centos/8/x86_64/images/CentOS-8-Vagrant-8.4.2105-20210603.0.x86_64.vagrant-virtualbox.box'
-  config.vm.box_download_checksum = 'dfe4a34e59eb3056a6fe67625454c3607cbc52ae941aeba0498c29ee7cb9ac22'
-  config.vm.box_download_checksum_type = 'sha256'
+  MACHINES.each do |boxname, boxconfig|
 
-config.vm.define "server" do |server|
+      config.vm.define boxname do |box|
 
-  server.vm.provider "virtualbox" do |vb|
-    vb.memory = "1024"
-    vb.customize ["modifyvm", :id, "--natdnshostresolver1", "on"]
+          box.vm.box = boxconfig[:box_name]
+          box.vm.host_name = boxname.to_s
+          box.vm.box_url = 'https://cloud.centos.org/centos/8/x86_64/images/CentOS-8-Vagrant-8.4.2105-20210603.0.x86_64.vagrant-virtualbox.box'
+          #box.vm.network "forwarded_port", guest: 3260, host: 3260+offset
+          box.vm.box_download_checksum = 'dfe4a34e59eb3056a6fe67625454c3607cbc52ae941aeba0498c29ee7cb9ac22'
+          box.vm.box_download_checksum_type = 'sha256'
+          box.vm.network "private_network", ip: boxconfig[:ip_addr]
+
+          box.vm.provider :virtualbox do |vb|
+            	  vb.customize ["modifyvm", :id, "--memory", "1024"]
+                  needsController = false
+		  boxconfig[:disks].each do |dname, dconf|
+			  unless File.exist?(dconf[:dfile])
+				vb.customize ['createhd', '--filename', dconf[:dfile], '--variant', 'Fixed', '--size', dconf[:size]]
+                                needsController =  true
+                          end
+
+		  end
+                  if needsController == true
+                     vb.customize ["storagectl", :id, "--name", "SATA", "--add", "sata" ]
+                     boxconfig[:disks].each do |dname, dconf|
+                         vb.customize ['storageattach', :id,  '--storagectl', 'SATA', '--port', dconf[:port], '--device', 0, '--type', 'hdd', '--medium', dconf[:dfile]]
+                     end
+                  end
+          end
+ 	  #box.vm.provision "shell", inline: <<-SHELL
+          #    fallocate -l 1M somefile.data
+          #    mdadm --detail /dev/md0 | grep UUID
+              
+
+  	 # SHELL
+
+          box.vm.provision "shell",
+            name: "Setup zfs",
+            path: "setup_zfs.sh"
+         
+        end
   end
-
-
-  server.vm.disk :disk, size: "1GB", name: "disk1"
-  server.vm.disk :disk, size: "1GB", name: "disk2"
-  server.vm.disk :disk, size: "1GB", name: "disk3"
-
-  config.vm.provider "virtualbox" do |vb|
-    needsController = false
-    if not  File.exist?('disk01.vdi')
-      vb.customize ['createhd', '--filename', 'disk01.vdi','--variant', 'Fixed', '--size', 2048]
-      vb.customize ['storageattach', :id, '--storagectl', 'IDE', '--port', 0, '--device', 1, '--type', 'hdd', '--medium', 'disk01.vdi'] 
-    end
-    if not  File.exist?('disk02.vdi')
-      vb.customize ['createhd', '--filename', 'disk02.vdi','--variant', 'Fixed', '--size', 2048]
-      vb.customize ['storageattach', :id, '--storagectl', 'IDE', '--port', 1, '--device', 1, '--type', 'hdd', '--medium', 'disk02.vdi']
-    end
-    if not  File.exist?('disk03.vdi')
-      vb.customize ['createhd', '--filename', 'disk03.vdi','--variant', 'Fixed', '--size', 2048]
-      vb.customize ['storageattach', :id, '--storagectl', 'IDE', '--port', 1, '--device', 0, '--type', 'hdd', '--medium', 'disk03.vdi']
-    end
-
-  end
- # server.vm.disk :disk, size: "1GB", name: "disk1"
- # server.vm.disk :disk, size: "1GB", name: "disk2"
- # server.vm.disk :disk, size: "1GB", name: "disk3"
-  #server.vm.disk :disk, size: "1GB", name: "disk4"
-  #server.vm.disk :disk, size: "1GB", name: "disk5"
-  #server.vm.disk :disk, size: "1GB", name: "disk6"
-  server.vm.host_name = 'server'
-  server.vm.network :private_network, ip: "10.0.0.41"
-
-
-
-  server.vm.provision "shell",
-    name: "Setup zfs",
-    path: "setup_zfs.sh"
-  end
-
-
-# Cent OS 8.2
-# config used from this
-# https://github.com/eoli3n/vagrant-pxe/blob/master/client/Vagrantfile
-  config.vm.define "client" do |client|
-    client.vm.host_name = 'client'
-    client.vm.network :private_network, ip: "10.0.0.40"
-    client.vm.disk :disk, size: "1GB", name: "disk1"
-    client.vm.disk :disk, size: "1GB", name: "disk2"
-    client.vm.disk :disk, size: "1GB", name: "disk3"
-   # client.vm.disk :disk, size: "1GB", name: "disk4"
-   # client.vm.disk :disk, size: "1GB", name: "disk5"
-   # client.vm.disk :disk, size: "1GB", name: "disk6"
-    client.vm.provider :virtualbox do |vb|
-      vb.memory = "1024"
-      vb.customize ["modifyvm", :id, "--natdnshostresolver1", "on"]
-    end
-  end
-
-#config.trigger.before :destroy do
-#  info "removing disks......................"
-#  run "rm -fv *.vdi"
-#end
-
 end
-
