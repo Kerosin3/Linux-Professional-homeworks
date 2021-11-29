@@ -18,6 +18,20 @@ config.vm.define "server" do |server|
     vb.customize ["modifyvm", :id, "--natdnshostresolver1", "on"]
   end
 
+  server.vm.provision "shell", inline: <<-SHELL
+              echo '---------------xxxxxxxxxxxxxxxxxxxxxx--------------------------------'
+              yum install nfs-utils -y
+              systemctl restart rpc-statd.service rpcbind.service rpcbind.socket
+              mkdir /home/vagrant/test_share
+              systemctl restart nfs-server.service
+              touch /home/vagrant/test_share/file_i_cant_modify
+              mkdir /home/vagrant/test_share/upload 
+              chmod o+rw /home/vagrant/test_share/upload
+              touch /home/vagrant/test_share/upload/file_i_CAN_modify
+              echo '/home/vagrant/test_share *(ro,no_root_squash,fsid=2)' >> /etc/exports
+              echo '/home/vagrant/test_share/upload *(rw,no_root_squash,fsid=1)' >> /etc/exports
+              exportfs -avf
+          SHELL
 
   server.vm.provision "shell",
     name: "configuration",
@@ -49,6 +63,7 @@ config.vm.define "server" do |server|
               yum install nfs-utils -y
               systemctl start nfs
               systemctl status nfs
+              systemctl restart nfs-server.service
           SHELL
   end
 
