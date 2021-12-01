@@ -1,0 +1,125 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+require 'open3'
+require 'fileutils'
+
+Vagrant.configure("2") do |config|
+
+config.vm.define "server" do |server|
+  config.vm.box = 'centos/8.4'
+  config.vm.box_url = 'http://cloud.centos.org/centos/8/vagrant/x86_64/images/CentOS-8-Vagrant-8.4.2105-20210603.0.x86_64.vagrant-virtualbox.box'
+
+  server.vm.host_name = 'server'
+  server.vm.network :private_network,:type => 'dhcp', :name => 'vboxnet0', :adapter => 2, ip: "10.0.0.41"
+
+  server.vm.provider "virtualbox" do |vb|
+    vb.memory = "1024"
+    vb.customize ["modifyvm", :id, "--natdnshostresolver1", "on"]
+  end
+
+  server.vm.provision "shell", inline: <<-SHELL
+              echo '---------------setting server-----------------------------'
+              yum install nfs-utils -y
+              systemctl enable nfs-server.service
+              systemctl start nfs-server.service
+              echo '-------------enabling firewall----------------------'
+              yum -y install firewalld
+              systemctl start firewalld
+              systemctl enable rpc-statd.service rpcbind.service rpcbind.socket
+              systemctl start rpc-statd.service rpcbind.service rpcbind.socket
+              firewall-cmd --add-service={nfs,nfs3,rpc-bind,mountd} --permanent
+              echo 'reloading firewall...............'
+              firewall-cmd --reload
+              echo 'used ports:................'
+              for s in `firewall-cmd --list-services`; do firewall-cmd --permanent --service "$s" --get-ports; done;
+              #################################################
+              echo 'creating nfs infrastructure.........'
+              groupadd nfs -g 1010 
+              useradd -u 1010 -g 1010 -m -s /bin/bash nfsuser
+              ######################################
+              mkdir /home/vagrant/test_share
+              chown -R nfsuser:nfs /home/vagrant/test_share
+              echo 'setting parent to read only'
+              chmod a=rx-w /home/vagrant/test_share
+              chmod o-x /home/vagrant/test_share
+              touch /home/vagrant/test_share/somefile
+              chown -R nfsuser:nfs /home/vagrant/test_share/somefile
+              chmod a=r-xw /home/vagrant/test_share/somefile
+              ##########
+              mkdir /home/vagrant/test_share/upload 
+              chown -R nfsuser:nfs /home/vagrant/test_share/upload
+              chmod a=rwx  /home/vagrant/test_share/upload
+              mkdir /home/vagrant/test_just_rw
+              #chown nfsuser:nfs /home/vagrant/test_just_rw
+              #chmod o+r /home/vagrant/test_just_rw 
+              #chown -R nobody:nobody /home/vagrant/test_share/upload
+              echo 'Setting SELINUX...........'
+              setsebool -P nfs_export_all_rw 1
+              #chmod 0777 /home/vagrant/test_share/upload
+              nfsconf --set nfsd vers4.2 y
+              nfsconf --set nfsd tcp y
+              systemctl restart nfs-server.service
+              echo '/home/vagrant/test_share *(rw,sync,root_squash,anongid=1010,anonuid=1010,no_all_squash,fsid=1)' >> /etc/exports
+              #echo '/home/vagrant/test_share/upload *(rw,sync,root_squash,fsid=1)' >> /etc/exports #not working
+              echo '/home/vagrant/test_just_rw *(rw,sync,root_squash,no_all_squash,anongid=1010,anonuid=1010,fsid=2)' >> /etc/exports
+              exportfs -avrf
+          SHELL
+
+  server.vm.provision "shell",run:'always', inline: <<-SHELL
+            echo 'restarting nfs server service'
+            systemctl enable nfs-server.service
+            systemctl start nfs-server.service
+            exportfs -avr
+            echo 'server is is:'
+            ip a show dev eth1
+          SHELL
+  server.vm.provision "shell",
+    name: "configuration",
+    path: "init.sh"
+  end
+
+
+  config.vm.define "client" do |client|
+    client.vm.box = 'centos/8.4'
+    client.vm.host_name = 'client'
+    client.vm.network :private_network,:type => 'dhcp', :name => 'vboxnet0', :adapter => 2, ip: "10.0.0.40"
+    client.vm.provider :virtualbox do |vb|
+    vb.memory = "1024"
+    vb.customize ["modifyvm", :id, "--natdnshostresolver1", "on"]
+    end
+    client.vm.provision "shell", inline: <<-SHELL
+              echo '--------------------setting--client-----------------------'
+              yum install nfs-utils -y
+              #yum install krb5-workstation krb5-libs -y
+              mkdir /mnt/nfs_share
+              #mkdir /mnt/just_rw
+              #mkdir /mnt/upload
+              systemctl enable nfs-server.service
+              systemctl enable nfs-client.target 
+              systemctl start nfs-client.target 
+              systemctl start nfs-server.service
+              groupadd nfs -g 1010
+              useradd -u 1010 -g 1010 -m -s /bin/bash nfsuser
+              nfsconf --set nfsd vers4.2 y
+              echo 'adding fstab entries.............'
+              echo '10.0.0.33:/home/vagrant/test_share       /mnt/nfs_share  nfs4    rw,_netdev,vers=4.2,proto=tcp,auto,x-systemd.automount,x-systemd.mount-timeout=10,timeo=14      0       0' >> /etc/fstab
+              #disabled#######echo '10.0.0.17:/home/vagrant/test_share/upload      /mnt/upload  nfs4    rw,_netdev,vers=4.2,proto=tcp,auto,x-systemd.automount,x-systemd.mount-timeout=10,timeo=14    0       0' >> /etc/fstab 
+              #disabled###########echo '10.0.0.6:/home/vagrant/test_share       nfs     rw,vers=3,_netdev,noauto,x-systemd.automount,x-systemd.mount-timeout=10,timeo=14  0       0' >> /etc/fstab
+              #disabled######echo '10.0.0.6:/home/vagrant/test2      /mnt/just_rw  nfs4    rw,_netdev,vers=4.2,proto=tcp,auto,x-systemd.automount,x-systemd.mount-timeout=10,timeo=14    0       0' >> /etc/fstab
+              mount /mnt/nfs_share
+              SHELL
+
+
+  client.vm.provision "shell",run:"always",inline: <<-SHELL
+            systemctl restart nfs-client.target 
+            echo 'mounted NFS ...............:'
+            mount | grep nfs
+            #systemctl start nfs-server.service 
+          SHELL
+
+
+  end
+
+end
+
