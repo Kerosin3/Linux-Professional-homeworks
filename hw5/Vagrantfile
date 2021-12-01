@@ -42,7 +42,7 @@ config.vm.define "server" do |server|
               chown -R nfsuser:nfs /home/vagrant/test_share
               echo 'setting parent to read only'
               chmod a=rx-w /home/vagrant/test_share
-              chmod o-x /home/vagrant/test_share
+              chmod a=r-w+x /home/vagrant/test_share
               touch /home/vagrant/test_share/somefile
               chown -R nfsuser:nfs /home/vagrant/test_share/somefile
               chmod a=r-xw /home/vagrant/test_share/somefile
@@ -103,7 +103,7 @@ config.vm.define "server" do |server|
               useradd -u 1010 -g 1010 -m -s /bin/bash nfsuser
               nfsconf --set nfsd vers4.2 y
               echo 'adding fstab entries.............'
-              echo '10.0.0.33:/home/vagrant/test_share       /mnt/nfs_share  nfs4    rw,_netdev,vers=4.2,proto=tcp,auto,x-systemd.automount,x-systemd.mount-timeout=10,timeo=14      0       0' >> /etc/fstab
+              echo '10.0.0.41:/home/vagrant/test_share       /mnt/nfs_share  nfs4    rw,_netdev,vers=4.2,proto=tcp,auto,x-systemd.automount,x-systemd.mount-timeout=10,timeo=14      0       0' >> /etc/fstab
               #disabled#######echo '10.0.0.17:/home/vagrant/test_share/upload      /mnt/upload  nfs4    rw,_netdev,vers=4.2,proto=tcp,auto,x-systemd.automount,x-systemd.mount-timeout=10,timeo=14    0       0' >> /etc/fstab 
               #disabled###########echo '10.0.0.6:/home/vagrant/test_share       nfs     rw,vers=3,_netdev,noauto,x-systemd.automount,x-systemd.mount-timeout=10,timeo=14  0       0' >> /etc/fstab
               #disabled######echo '10.0.0.6:/home/vagrant/test2      /mnt/just_rw  nfs4    rw,_netdev,vers=4.2,proto=tcp,auto,x-systemd.automount,x-systemd.mount-timeout=10,timeo=14    0       0' >> /etc/fstab
