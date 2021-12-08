@@ -3,7 +3,6 @@
 
 require 'open3'
 require 'fileutils'
-
 Vagrant.configure("2") do |config|
 
 config.vm.define "server" do |server|
@@ -20,6 +19,9 @@ config.vm.define "server" do |server|
 
   server.vm.provision "shell", inline: <<-SHELL
               echo '---------------setting server-----------------------------'
+              nfs_version=3
+              if [ $nfs_version == 4 ]; then
+              echo 'lunching nfs4 nfs_version'  
               yum install nfs-utils -y
               systemctl enable nfs-server.service
               systemctl start nfs-server.service
@@ -64,6 +66,31 @@ config.vm.define "server" do |server|
               #echo '/home/vagrant/test_share/upload *(rw,sync,root_squash,fsid=1)' >> /etc/exports #not working
               echo '/home/vagrant/test_just_rw *(rw,sync,root_squash,no_all_squash,anongid=1010,anonuid=1010,fsid=2)' >> /etc/exports
               exportfs -avrf
+              elif [ $nfs_version == 3 ]; then
+                echo 'slaunching nfs3 nfs_version'
+                nfsconf --set nfsd vers3 y
+                echo 'creating nfs infrastructure.........'
+                groupadd nfs -g 1010 
+                useradd -u 1010 -g 1010 -m -s /bin/bash nfsuser
+                ######################################
+                mkdir /home/vagrant/test_share
+                chown -R nfsuser:nfs /home/vagrant/test_share
+                echo 'setting parent to read only'
+                chmod a=rx-w /home/vagrant/test_share
+                chmod a=r-w+x /home/vagrant/test_share
+                touch /home/vagrant/test_share/somefile
+                chown -R nfsuser:nfs /home/vagrant/test_share/somefile
+                chmod a=r-xw /home/vagrant/test_share/somefile
+                ##########
+                mkdir /home/vagrant/test_share/upload 
+                chown -R nfsuser:nfs /home/vagrant/test_share/upload
+                chmod a=rwx  /home/vagrant/test_share/upload
+                yum install nfs-utils -y
+                echo '/home/vagrant/test_share *(rw,sync,root_squash,anongid=1010,anonuid=1010,no_all_squash,fsid=1)' >> /etc/exports
+                ecportfs -avr
+              else
+                echo 'wrong nfs nfs_version,aborting'
+              fi
           SHELL
 
   server.vm.provision "shell",run:'always', inline: <<-SHELL
@@ -90,7 +117,11 @@ config.vm.define "server" do |server|
     end
     client.vm.provision "shell", inline: <<-SHELL
               echo '--------------------setting--client-----------------------'
+              
               yum install nfs-utils -y
+              nfs_version=3
+              if [ $nfs_version == 4 ]; then
+              echo 'lunching nfs4 nfs_version' 
               #yum install krb5-workstation krb5-libs -y
               mkdir /mnt/nfs_share
               #mkdir /mnt/just_rw
@@ -108,11 +139,16 @@ config.vm.define "server" do |server|
               #disabled###########echo '10.0.0.6:/home/vagrant/test_share       nfs     rw,vers=3,_netdev,noauto,x-systemd.automount,x-systemd.mount-timeout=10,timeo=14  0       0' >> /etc/fstab
               #disabled######echo '10.0.0.6:/home/vagrant/test2      /mnt/just_rw  nfs4    rw,_netdev,vers=4.2,proto=tcp,auto,x-systemd.automount,x-systemd.mount-timeout=10,timeo=14    0       0' >> /etc/fstab
               mount /mnt/nfs_share
+              elif [ $nfs_version == 3 ]; then
+                echo 'slaunching nfs3 nfs_version'
+                mkdir /mnt/nfs_share
+                echo '10.0.0.49:/home/vagrant/test_share       /mnt/nfs_share  nfs    rw,_netdev,vers=3,proto=tcp,auto,x-systemd.automount,x-systemd.mount-timeout=10,timeo=14      0       0' >> /etc/fstab
+              fi
               SHELL
 
 
   client.vm.provision "shell",run:"always",inline: <<-SHELL
-            systemctl restart nfs-client.target 
+            #systemctl restart nfs-client.target 
             echo 'mounted NFS ...............:'
             mount | grep nfs
             #systemctl start nfs-server.service 
