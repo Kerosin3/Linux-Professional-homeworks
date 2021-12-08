@@ -160,7 +160,7 @@ config.vm.define "server" do |server|
               elif [ $nfs_version == 3 ]; then
                 echo 'launching nfs3 client nfs_version'
                 mkdir /mnt/nfs_share
-                echo '10.0.0.17:/home/vagrant/test_share       /mnt/nfs_share  nfs    rw,_netdev,vers=3,proto=udp,auto,x-systemd.automount,x-systemd.mount-timeout=10,timeo=14      0       0' >> /etc/fstab
+                echo '10.0.0.41:/home/vagrant/test_share       /mnt/nfs_share  nfs    rw,_netdev,vers=3,proto=udp,auto,x-systemd.automount,x-systemd.mount-timeout=10,timeo=14      0       0' >> /etc/fstab
                 mount /mnt/nfs_share
               fi
               SHELL
