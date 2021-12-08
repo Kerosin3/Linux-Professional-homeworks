@@ -20,6 +20,8 @@ config.vm.define "server" do |server|
   server.vm.provision "shell", inline: <<-SHELL
               echo '---------------setting server-----------------------------'
               nfs_version=3
+              done=0
+              yum install nmap -y
               if [ $nfs_version == 4 ]; then
               echo 'lunching nfs4 nfs_version'  
               yum install nfs-utils -y
@@ -67,8 +69,10 @@ config.vm.define "server" do |server|
               echo '/home/vagrant/test_just_rw *(rw,sync,root_squash,no_all_squash,anongid=1010,anonuid=1010,fsid=2)' >> /etc/exports
               exportfs -avrf
               elif [ $nfs_version == 3 ]; then
-                echo 'slaunching nfs3 nfs_version'
+                echo 'launching nfs3 nfs_version'
                 nfsconf --set nfsd vers3 y
+                nfsconf --set nfsd udp y
+                nfsconf --set nfsd tcp y
                 echo 'creating nfs infrastructure.........'
                 groupadd nfs -g 1010 
                 useradd -u 1010 -g 1010 -m -s /bin/bash nfsuser
@@ -85,20 +89,34 @@ config.vm.define "server" do |server|
                 mkdir /home/vagrant/test_share/upload 
                 chown -R nfsuser:nfs /home/vagrant/test_share/upload
                 chmod a=rwx  /home/vagrant/test_share/upload
-                yum install nfs-utils -y
+                yum install nfs-utils rpcbind -y
+                dnf install net-tools -y
                 echo '/home/vagrant/test_share *(rw,sync,root_squash,anongid=1010,anonuid=1010,no_all_squash,fsid=1)' >> /etc/exports
-                ecportfs -avr
+                systemctl enable rpcbind
+                systemctl enable nfs-server.service --now
+                echo 'enabling firewall'
+                systemctl enable firewalld 
+                systemctl start firewalld
+                rpcinfo -p | grep nfs
+                firewall-cmd --permanent --add-service nfs
+                firewall-cmd --permanent --add-service mountd
+                firewall-cmd --permanent --add-service rpc-bind
+                firewall-cmd --zone=public --permanent --add-port 2049/udp
+                firewall-cmd --reload
+                exportfs -avr
+                done0=1
+                netstat --listening --tcp --udp | grep nf
+                echo 'post usage:'
+                for s in `firewall-cmd --list-services`; do firewall-cmd --permanent --service "$s" --get-ports; done;
+
               else
                 echo 'wrong nfs nfs_version,aborting'
               fi
           SHELL
 
   server.vm.provision "shell",run:'always', inline: <<-SHELL
-            echo 'restarting nfs server service'
-            systemctl enable nfs-server.service
-            systemctl start nfs-server.service
-            exportfs -avr
-            echo 'server is is:'
+            echo "server is is $done0:"
+            (hostname -I | awk '{print $2}')
             ip a show dev eth1
           SHELL
   server.vm.provision "shell",
@@ -140,18 +158,18 @@ config.vm.define "server" do |server|
               #disabled######echo '10.0.0.6:/home/vagrant/test2      /mnt/just_rw  nfs4    rw,_netdev,vers=4.2,proto=tcp,auto,x-systemd.automount,x-systemd.mount-timeout=10,timeo=14    0       0' >> /etc/fstab
               mount /mnt/nfs_share
               elif [ $nfs_version == 3 ]; then
-                echo 'slaunching nfs3 nfs_version'
+                echo 'launching nfs3 client nfs_version'
                 mkdir /mnt/nfs_share
-                echo '10.0.0.49:/home/vagrant/test_share       /mnt/nfs_share  nfs    rw,_netdev,vers=3,proto=tcp,auto,x-systemd.automount,x-systemd.mount-timeout=10,timeo=14      0       0' >> /etc/fstab
+                echo '10.0.0.17:/home/vagrant/test_share       /mnt/nfs_share  nfs    rw,_netdev,vers=3,proto=udp,auto,x-systemd.automount,x-systemd.mount-timeout=10,timeo=14      0       0' >> /etc/fstab
+                mount /mnt/nfs_share
               fi
               SHELL
 
 
   client.vm.provision "shell",run:"always",inline: <<-SHELL
-            #systemctl restart nfs-client.target 
             echo 'mounted NFS ...............:'
-            mount | grep nfs
-            #systemctl start nfs-server.service 
+            mount -t nfs
+            cat /etc/mtab | tail -1
           SHELL
 
 
