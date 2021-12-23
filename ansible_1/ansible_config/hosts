@@ -1,0 +1,7 @@
+all:
+    children:
+        test_host:
+        
+test_host:
+    hosts:
+        test_ansible_client-01:

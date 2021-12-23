@@ -1,0 +1,28 @@
+---
+- name: Sample playbook
+  hosts: test_host
+  gather_facts: true
+  become: true
+  vars:
+    test_version: 1
+    nginx_version: 1.19
+
+  tasks:
+  - name: crete file
+    ansible.builtin.file:
+      path: /etc/foo.conf
+      mode: '0644'
+      state: touch
+  - name: installing soft
+    ansible.builtin.yum:
+      name:
+        - gcc
+        - git
+        - net-tools
+        - vim
+        - mc
+        - nginx
+      state: present
+        #  - name: Outpul variable 
+        # ansible.builtin.debug:
+        #msg: {{ test_var  }}
