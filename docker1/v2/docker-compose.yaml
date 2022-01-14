@@ -1,0 +1,14 @@
+version: '3.7'
+
+services:
+  alpine_nginx_hw:
+    image: alpine:3.15.0
+    environment:
+      test_env: "666"
+    ports:
+      - 8080:80
+        #POSTGRES_USER: "USER"
+        #POSTGRES_PASSWORD: "PASSWORD"
+        #ports:
+        # - 5432:5432
+
