@@ -1,1 +1,0 @@
-docker run --name test_nginx -p 8080:80 -dit --rm docker1_hw

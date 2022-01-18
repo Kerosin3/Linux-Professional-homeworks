@@ -2,7 +2,7 @@ version: '3.7'
 
 services:
   alpine_nginx_hw:
-    build: .
+    build: . # or keros1n/alpine_nginx_my
     image: alpine_nginx_80:latest
     tty: true
     environment:
@@ -10,10 +10,8 @@ services:
     ports:
       - 8081:80
         #command: '/bin/sh -c "echo $$test_env"'
-    command: service nginx status
+        #command: bash -c "
+        #service nginx status
+        #"
         #    command: nginx -t
-        #POSTGRES_USER: "USER"
-        #POSTGRES_PASSWORD: "PASSWORD"
-        #ports:
-        # - 5432:5432
 
