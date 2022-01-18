@@ -11,6 +11,3 @@ CMD ["nginx", "-g", "daemon off;"]
 RUN openrc \
 	&& touch /run/openrc/softlevel \
 	&& rc-service nginx start
-#ENTRYPOINT ["echo","NGINX SERVICE STATUS IS"]
-#ENTRYPOINT ["service","nginx"]
-#CMD ["status"]
