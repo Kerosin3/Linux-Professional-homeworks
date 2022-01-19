@@ -5,10 +5,10 @@
   become: true
   vars:
     test_version: 1
-    nginx_version: 1.19
+    nginx_version: 1.20.0
 
   tasks:
-  - name: crete file
+  - name: creating test file
     ansible.builtin.file:
       path: /etc/foo.conf
       mode: '0644'
@@ -21,8 +21,25 @@
         - net-tools
         - vim
         - mc
-        - nginx
       state: present
+  - name: adding nginx repo
+    ansible.builtin.copy:
+      src: ./configs/nginx_repo.repo
+      dest: /etc/yum.repos.d/
+      mode: preserve
+  - name: installing nginx
+    ansible.builtin.yum:
+      name:
+       - nginx-{{ nginx_version  }}
+      state: present
+  - name: checking nginx status
+    ansible.builtin.service:
+      name:
+        - nginx
+      state: started
         #  - name: Outpul variable 
         # ansible.builtin.debug:
         #msg: {{ test_var  }}
+  - command: service nginx status
+    args:
+      warn: false
