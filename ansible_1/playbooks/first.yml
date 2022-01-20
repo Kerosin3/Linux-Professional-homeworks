@@ -16,30 +16,43 @@
   - name: installing soft
     ansible.builtin.yum:
       name:
+        - "{{ item }}"
+      state: present
+    loop:
         - gcc
         - git
         - net-tools
         - vim
         - mc
-      state: present
   - name: adding nginx repo
     ansible.builtin.copy:
       src: ./configs/nginx_repo.repo
       dest: /etc/yum.repos.d/
       mode: preserve
+    register: result
   - name: installing nginx
     ansible.builtin.yum:
       name:
        - nginx-{{ nginx_version  }}
       state: present
+    when: result.state == 'file'
+  - name: Setting a hostname
+    ansible.builtin.hostname:
+      name: "{{ ansible_hostname_my  }}"
   - name: checking nginx status
     ansible.builtin.service:
-      name:
-        - nginx
+      name: nginx
       state: started
-        #  - name: Outpul variable 
-        # ansible.builtin.debug:
-        #msg: {{ test_var  }}
-  - command: service nginx status
-    args:
-      warn: false
+    when: ansible_facts["ansible_hostname"] == "ansible_nginx_main"
+  - name: Print test variable 
+    ansible.builtin.debug:
+      msg: "===========test var is nginx port is {{ ansible_nginx_port  }} =============="
+  - name: setting facts
+    set_fact:
+      info: "The machine {{ ansible_hostname_my  }} has been provosioned"
+        #- command: service nginx status
+        #args:
+        #warn: false
+  - name: Print all available facts
+    ansible.builtin.debug:
+      var: info      
