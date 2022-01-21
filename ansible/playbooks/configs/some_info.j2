@@ -1,0 +1,9 @@
+This is a test j2 template usage 
+
+{% for item in installed_soft %}
+	installed package {{ item  }}
+{% endfor %}
+hehe {{ ansible_hostname }}
+{{ ansible_os_family }}
+n_cpu = {{ ansible_processor_vcpus }}
+{{ ansible_memtotal_mb }}

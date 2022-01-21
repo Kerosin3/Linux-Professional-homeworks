@@ -1,0 +1,8 @@
+all:
+    children:
+        test_host:
+        
+test_host:
+    hosts:
+        main-server:
+        reserved-server:

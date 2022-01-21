@@ -1,0 +1,92 @@
+---
+- name: Sample playbook
+  hosts: test_host
+  gather_facts: true
+  become: true
+  vars:
+    test_version: 1
+    nginx_version: 1.20.0
+    installed_soft: ['gcc','git','net-tools','vim','mc','policycoreutils-python-utils']
+
+  tasks:
+  - name: creating test file
+    ansible.builtin.file:
+      path: /etc/foo.conf
+      mode: '0644'
+      state: touch
+  - name: installing soft
+    ansible.builtin.yum:
+      name:
+        - "{{ item }}"
+      state: present
+    loop: "{{ installed_soft  }}"
+  - name: adding nginx repo
+    ansible.builtin.copy:
+      src: ./configs/nginx_repo.repo
+      dest: /etc/yum.repos.d/
+      mode: preserve
+    register: result
+  - name: installing nginx
+    ansible.builtin.yum:
+      name:
+       - nginx-{{ nginx_version  }}
+      state: present
+    when: result.state == 'file'
+  - name: enable nginx service
+    systemd:
+      name: nginx
+      state: started
+      enabled: True
+  - name: Setting a hostname
+    ansible.builtin.hostname:
+      name: "{{ ansible_hostname_my  }}"
+  - name: setting facts
+    set_fact:
+      info: "The machine {{ ansible_hostname_my  }} has been provisioned"
+      ansible_nginx_port: "{{ ansible_nginx_port  }}"
+  - name: Print test variable 
+    ansible.builtin.debug:
+      msg: "===========ip address of host {{ ansible_hostname }} is {{ ansible_host  }}, forwarded to localhost nginx port is {{ ansible_nginx_port  }} =============="
+  - name: Print info about server
+    ansible.builtin.debug:
+      var: info      
+  - name: nginx status
+    ansible.builtin.cron:
+      name: "checking nginx status"
+      minute: "1"
+      job: "service nginx status"
+  - name: testing j2 templating
+    ansible.builtin.template:
+      src: ./configs/some_info.j2
+      dest: /home/vagrant/some_info.txt
+      owner: vagrant
+  - name: make sure open ports
+    ansible.builtin.command: semanage port -m -t http_port_t  -p tcp "{{ ansible_nginx_port  }}"
+    ignore_errors: yes
+  - name: copying server settings
+    ansible.builtin.template:
+      src: ./configs/server_default.j2
+      dest: /etc/nginx/conf.d/default.conf
+      mode: 644
+  - name: copying nginx index page
+    ansible.builtin.template:
+      src: ./configs/index_template.j2
+      dest: /usr/share/nginx/html/index.html
+      owner: root
+    notify: restart_nginx
+      
+  handlers:
+    - name: restart_nginx
+      service:
+        name=nginx
+        state=restarted
+ 
+     
+     
+     
+        #- name: reload nginx service
+        #ansible.builtin.service:
+        #name: nginx
+        #state: reloaded
+        #when: ansible_facts['hostname'] == "ansible_nginx_main"
+  
