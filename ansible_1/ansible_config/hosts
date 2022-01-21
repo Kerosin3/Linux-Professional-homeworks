@@ -4,4 +4,5 @@ all:
         
 test_host:
     hosts:
-        test_ansible_client-01:
+        main-server:
+        reserved-server:
