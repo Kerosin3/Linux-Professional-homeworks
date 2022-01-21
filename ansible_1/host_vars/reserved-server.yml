@@ -1,7 +1,0 @@
-ansible_host: 192.168.1.64
-ansible_user: vagrant
-ansible_ssh_port_t: 4569
-ansible_ssh_port: 22
-ansible_nginx_port: 8083
-ansible_hostname_my: ansible_nginx_reserved
-ansible_ssh_private_key: '~/.ssh/id_rsa' 
