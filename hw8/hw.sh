@@ -26,3 +26,4 @@ echo 'ip adress access list:'
 for x in "${!ip_calls[@]}"; do printf "[%s]=%s\n" "$x" "${ip_calls[$x]}" ; done | sort -k2,2 -t'=' -nr
 echo 'ok, exiting....'
 exit 0
+# tcpflow -p -c -i eno1 port 80 | grep -oE '(GET|POST|HEAD) .* HTTP/1.[01]|Host: .*'

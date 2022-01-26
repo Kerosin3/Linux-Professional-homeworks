@@ -1,0 +1,2 @@
+ack "GET /\S+?(?=\s)"
+cat access-4560-644067.log|  ack --output='acessing $1' 'GET (/\S+?(?=\s))' 
