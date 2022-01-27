@@ -1,14 +1,35 @@
 #/bin/bash
 echo
+#X IP адресов (с наибольшим кол-вом запросов) с указанием кол-ва запросов c момента последнего запуска скрипта;
+#Y запрашиваемых адресов (с наибольшим кол-вом запросов) с указанием кол-ва запросов c момента последнего запуска скрипта;
+#все ошибки c момента последнего запуска;
+#echo "starting working at $now"
 rflag=false
 modeflag0=false
 modeflag1=false
 filemane=''
+
+if [[ -s .log ]]; then #exists and not empty
+  last_done=$(tail -n 1 .log)
+  now="$(date +'%d/%b/%Y:%H:%M:%S %z')" # setting now if the script runs for the first time
+  echo "last script run was at $last_done" # read timedone if it was once done
+else # not existing
+  touch .log #creating
+  now="$(date +'%d/%b/%Y:%H:%M:%S %z')" # setting now if the script runs for the first time
+  last_done=$now
+fi
+
+#------------------------------------------------------------------------------------------------#
 function test {
 	echo "parameter #1 is $1"
 }
+#------------------------------------------------------------------------------------------------#
+#function search_time{
+#	cat access-4560-644067.log|  ack --output='acessing $1' '([[:digit:]][[:digit:]]\/.*?(?=\]))' 
+#}
+#------------------------------------------------------------------------------------------------#
+#------------------------------------------------------------------------------------------------#
 function calc_ip_calls {
-
 uniq=$(sed -n '/^[[:digit:]][[:digit:]][[:digit:]]*/p' $1  |cut -f 1 -d '-' | sort --unique )
 nouniq_count=$(sed -n '/^[[:digit:]][[:digit:]][[:digit:]]*/p' $1  |cut -f 1 -d '-' | wc -l)
 nouniq_list=$(sed -n '/^[[:digit:]][[:digit:]][[:digit:]]*/p' $1  |cut -f 1 -d '-' )
@@ -35,22 +56,24 @@ fi
 echo 'ip adress access list:'
 for x in "${!ip_calls[@]}"; do printf "[%s]=%s\n" "$x" "${ip_calls[$x]}" ; done | sort -k2,2 -t'=' -nr | head -$2
 echo 'ok, exiting....'
-exit 0
+#exit 0!!!!!!!!!!!
 }
 
-while getopts a:b:f: param;
+#------------------------------------------------------------------------------------------------#
+#------------------------------------------------------------------------------------------------#
+#------------------------------------------------------------------------------------------------#
+while getopts i:p:f: param;
 do
 	case "${param}" in
-		a) echo "found some 1 flag with value ${OPTARG}" 
+		i) echo "counting ips ${OPTARG}" 
 			count_n="${OPTARG}"
 			modeflag0=true
-			echo "value is $count"
 			;;
-		b) echo "found some 2 flag ${OPTARG}" 
-			count_n="${OPTARG}"
+		p) echo "counter the most popular pages ${OPTARG}" 
+			count_m="${OPTARG}"
 			modeflag1=true
 			;;
-		f) echo "analysing file with name ${OPTARG}" 
+		f) echo "specified file to analysis ${OPTARG}" 
 			rflag=true
 			filename="${OPTARG}"
 			;;
@@ -59,7 +82,7 @@ do
 			;;
 	esac
 done
-
+#checking necessary flags
 if ((OPTIND == 1))
 then
     echo "No options specified"
@@ -71,15 +94,68 @@ if (($# == 0))
 then
     echo "No positional arguments specified"
 fi
-
-#test "asdasd"
-calc_ip_calls "$filename" "$count_n"
 if ! $rflag #&& [[ -d $1 ]]
 then
     echo "file to analysis have to be specified, terminating..." >&2
     exit 1
 fi
-exit
+#------------------------------------------------------------------------------------------------#
+#checking passed arguments
+#------------------------------------------------------------------------------------------------#
+if [ "$modeflag1" != true ] && [ "$modeflag0" != true  ]
+then
+	echo 'either i or p flag have to be specified, terminating'
+	exit 1
+else
+	if [ "$modeflag0" = true  ] 
+	then
+		uniq_t=$(sed -n '/^[[:digit:]][[:digit:]][[:digit:]]*/p' $filename  |cut -f 1 -d '-' | sort --unique | wc -l ) #unique count
+		if ! ([ "$count_n" -gt 0  ] && [ "$count_n" -le $uniq_t  ]) # if we counting smt greater 0 and lesser than max uniq ip in the file
+		then
+			echo 'specified value have to be greater that 0 and less or equal then uniq ip in the log, terminating...'
+			exit 1
+		fi
+
+	fi
+
+	if [ "$modeflag1" = true  ] 
+	then
+		if ! [ "$count_m" -gt 0  ]
+		then
+			echo 'specified value have to be greater that 0, terminating...'
+			exit 1
+		fi
+
+	fi
+
+fi
+#------------------------------------------------------------------------------------------------#
+#------------------------------------------------------------------------------------------------#
+#------------------------------------------------------------------------------------------------#
+#------------------------------------------------------------------------------------------------#
+if [ "$modeflag0" = true  ] # counting ips...
+then
+	calc_ip_calls "$filename" "$count_n"
+fi
+
+if [ "$modeflag1" = true  ] #counting pages
+then
+	count_pages_requests "$filename" "$count_m"
+fi
+
+
+#------------------------------------------------------------------------------------------------#
+if [ -w .log ] 
+then
+	echo "$now" >> .log # write this time script worked out
+else
+	echo 'cannot write to .log file'
+	exit 1
+fi
+exit 0
+
+
+#exit
 ######################main###################
 
 
