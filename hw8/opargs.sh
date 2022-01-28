@@ -24,9 +24,39 @@ function test {
 	echo "parameter #1 is $1"
 }
 #------------------------------------------------------------------------------------------------#
-#function search_time{
-#	cat access-4560-644067.log|  ack --output='acessing $1' '([[:digit:]][[:digit:]]\/.*?(?=\]))' 
-#}
+#1 param - filename, #2 - date last run
+function search_time {
+	declare -A time_calls
+	#echo "$1"
+	total_calls=$(wc -l < $1) # get n calls
+	calls_time=$(ack --output='$1' '([[:digit:]][[:digit:]]\/.*?(?=\s\+0))' $1 | cut -d':' -f1-) # get data-time  $1 -problem..
+#	echo $calls_time
+	for call_n in $(seq 1 $total_calls);
+	do
+		time_this_call=$(echo "$calls_time" | sed -n "$call_n p") # get nth call time	
+		time_calls["$call_n"]="$time_this_call" #filling array of times
+	done
+	now2=${now::-5} # removing timezone for now time
+	last_call=${time_calls[$total_calls]} # last
+	j=0
+	start_analysis=0
+	for i in "${!time_calls[@]}"
+	do
+	  #echo "key  : $i"
+  	  #echo "value : ${time_calls[$i]}"
+	  if [[ ${time_calls[$i]} > ${now2} ]]
+	  	then 
+			start_analysis=$i  # if we less, then we are in outdated, starting from this number
+			break;
+		#else
+		#	j=$(expr $i - 1)
+		#	start_analysis=$j
+	  fi
+	  echo "$start_analysis"
+	done
+	
+
+}
 #------------------------------------------------------------------------------------------------#
 #------------------------------------------------------------------------------------------------#
 function calc_ip_calls {
@@ -82,6 +112,7 @@ do
 			;;
 	esac
 done
+search_time "$filename"
 #checking necessary flags
 if ((OPTIND == 1))
 then
