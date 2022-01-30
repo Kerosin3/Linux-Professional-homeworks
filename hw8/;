@@ -22,55 +22,26 @@ fi
 #------------------------------------------------------------------------------------------------#
 # 1 param - filename, 
 function get_resources_calls {
-	start_analysis=1
 	#all_resources_but=$(ack --output='$1' 'GET (/\S+?(?=\s))' | tail -n +$start_analysis )  # filter out all unnecessary
 	all_resources_but=$(cat $1 | tail -n +$start_analysis | ack --output='$1' 'GET (/\S+?(?=\s))') # start fron start analysis_date and get all GET requests resources names
-	all_resources_but_n=$(cat $1 | tail -n +$start_analysis | ack --output='$1' 'GET (/\S+?(?=\s))' | wc -l) # start fron start analysis_date and get all GET requests resources names
-
-	#echo "dasdas $main_page_count"
-
-	n_requests=$(cat $1 | tail -n +$start_analysis | ack --output='$1' 'GET /' | wc -l) # start fron start analysis_date and get all GET requests resources names including / page
-	#n_requests=$((n_requests + main_page_count))  # add main page calls
-	echo "total calls = $n_requests"
-	echo "non root calls = $all_resources_but_n"
-	unique_resources=$(echo "$all_resources_but" | sort --unique ) #  unique resources
-	#echo "$(echo $unique_resources) | head -5"
-	
-
-	n_unique_resources=$(echo "$all_resources_but" | sort --unique | wc -l) #  n of unique resources
-	#echo "$(echo $unique_resources) | head -5"
+	n_requests=$(echo $all_resources_but | wc -l)
+	unique_resources=$(echo $all_resources | sort --unique | wc -l) # n of unique resources
 	declare -A resources_calls
 	var_count_total=0
-	iter0=0 
 	for resource in $unique_resources # for each unique resource
 	do
-		count00=$(echo "$all_resources_but" |   grep  "$resource" | wc -l) # search n of coincedences ACK IS NOW WORKING HERE
+		count00=$(echo "$all_resources_but" |  sed -n "/$resource/p" | wc -l) # search n of coincedences
 		var_count_total=$((var_count_total + count00)) 
-		echo "count is $count00, tc=$var_count_total resource is $resource"
-		iter0=$((iter0 + 1)) 
-		#echo "----------$iter0"
-		#resource_calls["$resource"]="$count00" # assign
+		resource_calls["$resource"]="$count00" # assign
 	#echo "value is $count"
-    done
-    echo "----------$var_count_total"
-    main_page='/'
-	main_page_count=0
-	main_page_count=$(cat $1 | tail -n +$start_analysis | ack --output='$1' '(GET / )' | wc -l) #root calls
-	if [ $main_page_count -ne 0 ] 
-	then
-		echo "main page count $main_page_count"
-		var_count_total=$((var_count_total + main_page_count))
-		#then unique_resources="${main_page}\n${unique_resources}" # add / to list of resources
-	fi
-
 	if [ $var_count_total -ne $n_requests ]
 	then
-		echo "some error while counting, aborting..... $var_count_total"
+		echo 'some error while counting, aborting.....'
 		exit 1
 	fi
 #
 	#echo "$ip_iter was counted ${ip_calls["$ip_iter"]}"
-	
+	done
 #
 
 }
@@ -89,9 +60,7 @@ function search_time {
 		time_calls["$call_n"]="$time_this_call" #filling array of times
 	done
 	now2=${now::-5} # removing timezone for now time
-	#now2='14/Aug/2019:14:46:59' # test
-	#now2='14/Aug/2019:14:54:00' # test
-	
+	now2='14/Aug/2019:14:46:59' # test
 	last_call=${time_calls[$total_calls]} # last
 	j=0
 	start_analysis=1 # start from the very beginning
@@ -228,8 +197,8 @@ fi
 
 if [ "$modeflag1" = true  ] #counting pages
 then
-	#count_pages_requests "$filename" "$count_m"
-	get_resources_calls "$filename"  #"$count_m"
+	count_pages_requests "$filename" "$count_m"
+	get_resources_calls "$filename" "$count_m"
 fi
 
 
