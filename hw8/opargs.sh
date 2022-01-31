@@ -91,7 +91,7 @@ function get_resources_calls {
 #	done
 	echo "----------------------------------------------------"
 	echo "$count_m top requested pages"
-	for x in "${!resource_calls[@]}"; do printf "page [%s] [%s] times\n" "${resource_calls[$x]}" "$x"; done  | tail -$count_m | tac | column -t
+	for x in "${!resource_calls[@]}"; do printf "page [%s] %s times\n" "${resource_calls[$x]}" "$x"; done  | tail -$count_m | tac | column -t
 	#echo "$ip_iter was counted ${ip_calls["$ip_iter"]}"
 	
 #
@@ -164,7 +164,8 @@ fi
 #("{ip_calls[*]}" | cut -f 1,4 -d ' ')
 echo "----------------------------------------------------"
 echo "$count_n top acessed ip adressess:"
-for x in "${!ip_calls[@]}"; do printf "ip-address [%s] [%s] times\n" "$x" "${ip_calls[$x]}" ; done | sort -k2,2 -t'=' -nr | head -$2 | column -t
+#for x in "${!ip_calls[@]}"; do printf "ip-address [%s] [%s] times\n" "$x" "${ip_calls[$x]}" ; done | sort -k2,2 -t'=' -nr | head -$2 | column -t
+for x in "${!ip_calls[@]}"; do printf "ip-address [%s] %s times\n" "$x" "${ip_calls[$x]}" ; done | sort -k3 -t' ' -nr | head -$2 | column -t
 #echo 'ok, exiting....'
 #exit 0!!!!!!!!!!!
 }
