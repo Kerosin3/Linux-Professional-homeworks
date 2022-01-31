@@ -5,6 +5,7 @@ echo
 #все ошибки c момента последнего запуска;
 #echo "starting working at $now"
 rflag=false
+eflag=false
 modeflag0=false
 modeflag1=false
 filemane=''
@@ -31,8 +32,8 @@ function get_resources_calls {
 	#echo "dasdas $main_page_count"
 	n_requests=$(cat $1 | tail -n +$start_analysis | ack --output='$1' 'GET /' | wc -l) # start fron start analysis_date and get all GET requests resources names including / page
 	#n_requests=$((n_requests + main_page_count))  # add main page calls
-	echo "total calls = $n_requests"
-	echo "non root calls = $all_resources_but_n"
+	#echo "total calls = $n_requests"
+	#echo "non root calls = $all_resources_but_n"
 	unique_resources=$(echo "$all_resources_but" | sort --unique ) #  unique resources
 	#echo "$(echo $unique_resources) | head -5"
 	n_unique_resources=$(echo "$all_resources_but" | sort --unique | wc -l) #  n of unique resources
@@ -69,10 +70,10 @@ function get_resources_calls {
     main_page='/'
 	main_page_count=0
 	main_page_count=$(cat $1 | tail -n +$start_analysis | ack --output='$1' '(GET / )' | wc -l) #root calls
-	echo "main page count is $main_page_count"
+	#echo "main page count is $main_page_count"
 	if [ $main_page_count -ne 0 ] 
 	then
-		echo "main page count $main_page_count"
+		#echo "main page count $main_page_count"
 		var_count_total=$((var_count_total + main_page_count))
 		resource_calls["$main_page_count"]="/"
 		#then unique_resources="${main_page}\n${unique_resources}" # add / to list of resources
@@ -136,6 +137,11 @@ function search_time {
 
 }
 #------------------------------------------------------------------------------------------------#
+#function print_error {
+#	if [ -f $filename ] then
+#		$(cat filename | tail -n +start_analysis)
+#	fi
+#}
 #------------------------------------------------------------------------------------------------#
 function calc_ip_calls {
 
@@ -188,6 +194,11 @@ do
 			rflag=true
 			filename="${OPTARG}"
 			;;
+		e) echo "specified error file to analysis ${OPTARG}" 
+			eflag=true
+			filenameE="${OPTARG}"
+			;;
+
 
 		*) echo "unknown flag $param" 
 			;;
