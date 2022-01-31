@@ -22,53 +22,76 @@ fi
 #------------------------------------------------------------------------------------------------#
 # 1 param - filename, 
 function get_resources_calls {
-	start_analysis=1
-	#all_resources_but=$(ack --output='$1' 'GET (/\S+?(?=\s))' | tail -n +$start_analysis )  # filter out all unnecessary
+	#ack version GREP IS NOT WORKING HEREEE
 	all_resources_but=$(cat $1 | tail -n +$start_analysis | ack --output='$1' 'GET (/\S+?(?=\s))') # start fron start analysis_date and get all GET requests resources names
 	all_resources_but_n=$(cat $1 | tail -n +$start_analysis | ack --output='$1' 'GET (/\S+?(?=\s))' | wc -l) # start fron start analysis_date and get all GET requests resources names
-
+	# grep perl version
+	#all_resources_but=$(cat $1 | tail -n +$start_analysis | grep -P 'GET /\S+?(?=\s)') # start fron start analysis_date and get all GET requests resources names
+	#all_resources_but_n=$(cat $1 | tail -n +$start_analysis | grep -P -c 'GET /\S+?(?=\s)') # start fron start analysis_date and get all GET requests resources names
 	#echo "dasdas $main_page_count"
-
 	n_requests=$(cat $1 | tail -n +$start_analysis | ack --output='$1' 'GET /' | wc -l) # start fron start analysis_date and get all GET requests resources names including / page
 	#n_requests=$((n_requests + main_page_count))  # add main page calls
 	echo "total calls = $n_requests"
 	echo "non root calls = $all_resources_but_n"
 	unique_resources=$(echo "$all_resources_but" | sort --unique ) #  unique resources
 	#echo "$(echo $unique_resources) | head -5"
-	
-
 	n_unique_resources=$(echo "$all_resources_but" | sort --unique | wc -l) #  n of unique resources
+#	echo $unique_resources
 	#echo "$(echo $unique_resources) | head -5"
 	declare -A resources_calls
 	var_count_total=0
 	iter0=0 
 	for resource in $unique_resources # for each unique resource
 	do
-		count00=$(echo "$all_resources_but" |   grep  "$resource" | wc -l) # search n of coincedences ACK IS NOW WORKING HERE
+		count00=0
+		#search="${resource}[\s]"  simple pattern not working like this!!!!!
+		#echo "searching... $search"
+		#count00=$(echo "$all_resources_but" |   grep -c "$search " ) # search n of coincedences =====ACK IS NOW WORKING HERE=== GREP iEP
+		#ack "$resource\s"
+		count00=$(echo "$all_resources_but" |   grep -P "${resource}( |$)" | wc -l ) # search n of coincedences ACK IS NOW WORKING HERE GREP iE P
+		# GREP ONLY WORKING IN PERL MODE SOME MAGIC!!!
+		if [ $count00 -eq 0  ]
+		then
+			count00=$(echo "$all_resources_but" |  grep  -c "$resource") # perl mode cannon deal with basic resources form, if 0 - count as usually.
+		fi
+		if [ $count00 -eq 0  ] #check second time, have not to be eq to zero!
+		then
+			echo "unknown error while pattern matching, aborting..."
+			exit 1
+		fi
 		var_count_total=$((var_count_total + count00)) 
-		echo "count is $count00, tc=$var_count_total resource is $resource"
-		iter0=$((iter0 + 1)) 
 		#echo "----------$iter0"
+		resource_calls["$count00"]="$resource" # assign
 		#resource_calls["$resource"]="$count00" # assign
 	#echo "value is $count"
     done
-    echo "----------$var_count_total"
+    #echo "total count is ----------$var_count_total"
     main_page='/'
 	main_page_count=0
 	main_page_count=$(cat $1 | tail -n +$start_analysis | ack --output='$1' '(GET / )' | wc -l) #root calls
+	echo "main page count is $main_page_count"
 	if [ $main_page_count -ne 0 ] 
 	then
 		echo "main page count $main_page_count"
 		var_count_total=$((var_count_total + main_page_count))
+		resource_calls["$main_page_count"]="/"
 		#then unique_resources="${main_page}\n${unique_resources}" # add / to list of resources
 	fi
 
-	if [ $var_count_total -ne $n_requests ]
+	if [ $var_count_total -ne $n_requests ] #check if total counted resoucess call eq to n of call GET
 	then
-		echo "some error while counting, aborting..... $var_count_total"
+		echo "some error while counting, aborting..... $var_count_total != $n_requests"
 		exit 1
+	else
+		echo "ok"
 	fi
 #
+#	for n_calls in "${!resource_calls[@]}"; do
+#  		echo " n calls:$n_calls, resource -> ${resource_calls[$n_calls]}"
+#	done
+	echo "----------------------------------------------------"
+	echo "$count_m top requested pages"
+	for x in "${!resource_calls[@]}"; do printf "page [%s] [%s] times\n" "${resource_calls[$x]}" "$x"; done  | tail -$count_m | tac | column -t
 	#echo "$ip_iter was counted ${ip_calls["$ip_iter"]}"
 	
 #
@@ -140,8 +163,8 @@ fi
 #("{ip_calls[*]}" | cut -f 1,4 -d ' ' | sort -k2,2 -nr)
 #("{ip_calls[*]}" | cut -f 1,4 -d ' ')
 echo "----------------------------------------------------"
-echo "top acessed $count_n ip adressess:"
-for x in "${!ip_calls[@]}"; do printf "[%s]=%s\n" "$x" "${ip_calls[$x]}" ; done | sort -k2,2 -t'=' -nr | head -$2
+echo "$count_n top acessed ip adressess:"
+for x in "${!ip_calls[@]}"; do printf "ip-address [%s] [%s] times\n" "$x" "${ip_calls[$x]}" ; done | sort -k2,2 -t'=' -nr | head -$2 | column -t
 #echo 'ok, exiting....'
 #exit 0!!!!!!!!!!!
 }
@@ -152,11 +175,11 @@ for x in "${!ip_calls[@]}"; do printf "[%s]=%s\n" "$x" "${ip_calls[$x]}" ; done 
 while getopts i:p:f: param;
 do
 	case "${param}" in
-		i) echo "counting ips ${OPTARG}" 
+		i) echo "counting ip that acessed the server ${OPTARG}" 
 			count_n="${OPTARG}"
 			modeflag0=true
 			;;
-		p) echo "counter the most popular pages ${OPTARG}" 
+		p) echo "counting the most popular pages ${OPTARG}" 
 			count_m="${OPTARG}"
 			modeflag1=true
 			;;
@@ -208,9 +231,16 @@ else
 
 	if [ "$modeflag1" = true  ] 
 	then
+		all_resources_but_n_uniq=$(cat $filename | tail -n +$start_analysis | ack --output='$1' 'GET (/\S+?(?=\s))'| sort --unique | wc -l) # start fron start analysis_date and get all GET requests resources names
 		if ! [ "$count_m" -gt 0  ]
 		then
 			echo 'specified value have to be greater that 0, terminating...'
+			exit 1
+		fi
+		if [ "$count_m" -gt "$all_resources_but_n_uniq" ]
+		then
+			echo "unique resources n: $all_resources_but_n_uniq"
+			echo 'entered number of resources have to be less than n of uniq resources in log file, aborting..'	
 			exit 1
 		fi
 
