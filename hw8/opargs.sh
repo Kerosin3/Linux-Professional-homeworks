@@ -1,5 +1,5 @@
 #/bin/bash
-echo
+#echo
 #X IP адресов (с наибольшим кол-вом запросов) с указанием кол-ва запросов c момента последнего запуска скрипта;
 #Y запрашиваемых адресов (с наибольшим кол-вом запросов) с указанием кол-ва запросов c момента последнего запуска скрипта;
 #все ошибки c момента последнего запуска;
@@ -9,7 +9,7 @@ eflag=false
 modeflag0=false
 modeflag1=false
 filemane=''
-
+#creating log file to precess date
 if [[ -s .log ]]; then #exists and not empty
   last_done=$(tail -n 1 .log)
   now="$(date +'%d/%b/%Y:%H:%M:%S %z')" # setting now if the script runs for the first time
@@ -23,32 +23,19 @@ fi
 #------------------------------------------------------------------------------------------------#
 # 1 param - filename, 
 function get_resources_calls {
-	#ack version GREP IS NOT WORKING HEREEE
+	#ack version (getting rid of GET suffiix)
 	all_resources_but=$(cat $1 | tail -n +$start_analysis | ack --output='$1' 'GET (/\S+?(?=\s))') # start fron start analysis_date and get all GET requests resources names
-	all_resources_but_n=$(cat $1 | tail -n +$start_analysis | ack --output='$1' 'GET (/\S+?(?=\s))' | wc -l) # start fron start analysis_date and get all GET requests resources names
-	# grep perl version
 	#all_resources_but=$(cat $1 | tail -n +$start_analysis | grep -P 'GET /\S+?(?=\s)') # start fron start analysis_date and get all GET requests resources names
-	#all_resources_but_n=$(cat $1 | tail -n +$start_analysis | grep -P -c 'GET /\S+?(?=\s)') # start fron start analysis_date and get all GET requests resources names
-	#echo "dasdas $main_page_count"
-	n_requests=$(cat $1 | tail -n +$start_analysis | ack --output='$1' 'GET /' | wc -l) # start fron start analysis_date and get all GET requests resources names including / page
-	#n_requests=$((n_requests + main_page_count))  # add main page calls
-	#echo "total calls = $n_requests"
-	#echo "non root calls = $all_resources_but_n"
+	all_resources_but_n=$(cat $1 | tail -n +$start_analysis | grep -P -c 'GET /\S+?(?=\s)') # n of get requests excluding / page
+	n_requests=$(cat $1 | tail -n +$start_analysis | grep -c 'GET /' ) # start fron start analysis_date and get all GET requests resources names including / page
 	unique_resources=$(echo "$all_resources_but" | sort --unique ) #  unique resources
-	#echo "$(echo $unique_resources) | head -5"
-	n_unique_resources=$(echo "$all_resources_but" | sort --unique | wc -l) #  n of unique resources
-#	echo $unique_resources
-	#echo "$(echo $unique_resources) | head -5"
+	n_unique_resources=$(echo "$unique_resources" | wc -l) #  n of unique resources
 	declare -A resources_calls
 	var_count_total=0
 	iter0=0 
 	for resource in $unique_resources # for each unique resource
 	do
 		count00=0
-		#search="${resource}[\s]"  simple pattern not working like this!!!!!
-		#echo "searching... $search"
-		#count00=$(echo "$all_resources_but" |   grep -c "$search " ) # search n of coincedences =====ACK IS NOW WORKING HERE=== GREP iEP
-		#ack "$resource\s"
 		count00=$(echo "$all_resources_but" |   grep -P "${resource}( |$)" | wc -l ) # search n of coincedences ACK IS NOW WORKING HERE GREP iE P
 		# GREP ONLY WORKING IN PERL MODE SOME MAGIC!!!
 		if [ $count00 -eq 0  ]
@@ -61,22 +48,15 @@ function get_resources_calls {
 			exit 1
 		fi
 		var_count_total=$((var_count_total + count00)) 
-		#echo "----------$iter0"
 		resource_calls["$count00"]="$resource" # assign
-		#resource_calls["$resource"]="$count00" # assign
-	#echo "value is $count"
     done
-    #echo "total count is ----------$var_count_total"
     main_page='/'
 	main_page_count=0
 	main_page_count=$(cat $1 | tail -n +$start_analysis | ack --output='$1' '(GET / )' | wc -l) #root calls
-	#echo "main page count is $main_page_count"
 	if [ $main_page_count -ne 0 ] 
 	then
-		#echo "main page count $main_page_count"
 		var_count_total=$((var_count_total + main_page_count))
 		resource_calls["$main_page_count"]="/"
-		#then unique_resources="${main_page}\n${unique_resources}" # add / to list of resources
 	fi
 
 	if [ $var_count_total -ne $n_requests ] #check if total counted resoucess call eq to n of call GET
@@ -86,62 +66,80 @@ function get_resources_calls {
 	else
 		echo "ok"
 	fi
-#
 #	for n_calls in "${!resource_calls[@]}"; do
 #  		echo " n calls:$n_calls, resource -> ${resource_calls[$n_calls]}"
 #	done
 	echo "----------------------------------------------------"
 	echo "$count_m top requested pages"
 	for x in "${!resource_calls[@]}"; do printf "page [%s] %s times\n" "${resource_calls[$x]}" "$x"; done  | tail -$count_m | tac | column -t
-	#echo "$ip_iter was counted ${ip_calls["$ip_iter"]}"
-	
-#
-
 }
 #------------------------------------------------------------------------------------------------#
 #1 param - filename, #2 - date last run
 function search_time {
 	declare -A time_calls
-	#echo "$1"
 	total_calls=$(wc -l < $1) # get n calls
-	#echo $time_calls
 	calls_time=$(ack --output='$1' '([[:digit:]][[:digit:]]\/.*?(?=\s\+0))' $1 | cut -d':' -f1-) # get data-time  $1 -problem..
-#	echo $calls_time
 	for call_n in $(seq 1 $total_calls);
 	do
 		time_this_call=$(echo "$calls_time" | sed -n "$call_n p") # get nth call time	
 		time_calls["$call_n"]="$time_this_call" #filling array of times
 	done
 	now2=${now::-5} # removing timezone for now time
-	#now2='14/Aug/2019:14:46:59' # test
-	#now2='14/Aug/2019:14:54:00' # test
-	
 	last_call=${time_calls[$total_calls]} # last
 	j=0
 	start_analysis=1 # start from the very beginning
 	for i in $(seq 1 $total_calls); #sequential 
 	do
-#	  echo "key  : $i"
-  	  #echo "value : ${time_calls[$i]}"
 	  if [[ ${time_calls[$i]} > ${now2} ]] # if current iteration date is greater than NOW2, then break and start from this date
 	  	then 
 			start_analysis=$i  # setting analysis start from
 			break;
-		#else  				
-		#	j=$(expr $i - 1)
-		#	start_analysis=$j
 	  fi
 	done
   echo  "analysis has started from n:$start_analysis, date: ${time_calls[$start_analysis]}"
-  #echo ${time_calls[$start_analysis]}
 
 }
 #------------------------------------------------------------------------------------------------#
-#function print_error {
-#	if [ -f $filename ] then
-#		$(cat filename | tail -n +start_analysis)
-#	fi
-#}
+# search time for erros
+function print_error {
+#	filenameE='error_log'
+	if [ -f $filenameE ] 
+	then
+		dates_errors=$(cat $filenameE) #| tail -n +start_analysis) # cut
+		dates_errors_n=$(cat $filenameE | wc -l) #| tail -n +start_analysis) # cut
+		if [ $dates_errors_n -eq 0 ] 
+			then
+				echo "there is nothing in error log file, skipping"
+		fi
+		current_date_errors="$(date +'%d/%m/%Y %H:%M:%S')"
+		line_date_analysis=1
+		for i in $(seq 1 $dates_errors_n)
+		do
+			i_line=$(echo "$dates_errors" | sed -n "$i p"| cut -f 1,2 -d ' ') # take i line and take date and time
+			#i_line=$(echo "$dates_time" | tail  -n +$i) # take i line
+			#i_line=$(echo "$dates_time" | awk "NR == n1" n1=$i) # take i line
+			#i_line_date=$(echo $i_line | cut -f 1,2 -d ' ') # take date
+			if [[ ${current_date_errors} > ${i_line} ]] #once we are later, take previous
+				then 	
+	     				if [ $i -eq 1  ]	
+					then
+					       break # line = 1
+					else
+						line_date_analysis=$[$i_line - 1] # take previous
+						break
+					fi
+			fi
+		done
+		echo "----------------------------------------------------"
+		echo "analysing error file from $line_date_analysis'st line"
+		echo "----------------------------------------------------"
+		out0=$(echo "$dates_errors" | tail -n +$line_date_analysis  | cut -f 1,2,4 -d ' ' | column -t -N date,time,error_code) # take i line and take date and time
+		echo "$out0"
+	else
+		echo 'error file now found, skipping error analysing'
+	fi
+#	14/Aug/2019:04:12:10
+}
 #------------------------------------------------------------------------------------------------#
 function calc_ip_calls {
 
@@ -156,30 +154,21 @@ do
 	count=$(echo "$nouniq_list" |  sed -n "/$ip_iter/p" | wc -l)
 	var_count_total=$((var_count_total + count))
 	ip_calls["$ip_iter"]="$count"
-	#echo "value is $count"
-	#echo "$ip_iter was counted ${ip_calls["$ip_iter"]}"
 done
-#echo "total is $var_count_total"
-#echo "estimated $nouniq_count"
 if [ $var_count_total -ne $nouniq_count ]
 then
 	echo 'aborting'
 	exit 1
 fi
-#("{ip_calls[*]}" | cut -f 1,4 -d ' ' | sort -k2,2 -nr)
-#("{ip_calls[*]}" | cut -f 1,4 -d ' ')
 echo "----------------------------------------------------"
 echo "$count_n top acessed ip adressess:"
-#for x in "${!ip_calls[@]}"; do printf "ip-address [%s] [%s] times\n" "$x" "${ip_calls[$x]}" ; done | sort -k2,2 -t'=' -nr | head -$2 | column -t
 for x in "${!ip_calls[@]}"; do printf "ip-address [%s] %s times\n" "$x" "${ip_calls[$x]}" ; done | sort -k3 -t' ' -nr | head -$2 | column -t
-#echo 'ok, exiting....'
-#exit 0!!!!!!!!!!!
 }
 
 #------------------------------------------------------------------------------------------------#
 #------------------------------------------------------------------------------------------------#
 #------------------------------------------------------------------------------------------------#
-while getopts i:p:f: param;
+while getopts i:p:f:e: param;
 do
 	case "${param}" in
 		i) echo "counting ip that acessed the server ${OPTARG}" 
@@ -217,9 +206,9 @@ if (($# == 0))
 then
     echo "No positional arguments specified"
 fi
-if ! $rflag #&& [[ -d $1 ]]
+if ! $rflag  || ! $eflag #&& [[ -d $1 ]]
 then
-    echo "file to analysis have to be specified, terminating..." >&2
+    echo "file to analysis and error file have to be specified, terminating..." >&2
     exit 1
 fi
 #------------------------------------------------------------------------------------------------#
@@ -283,6 +272,7 @@ else
 	echo 'cannot write to .log file'
 	exit 1
 fi
+print_error
 exit 0
 
 

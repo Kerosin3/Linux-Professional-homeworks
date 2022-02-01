@@ -1,0 +1,19 @@
+2022/02/01 09:21:07 [notice] 1#1: using the "epoll" event method
+2022/02/01 09:21:07 [notice] 1#1: nginx/1.20.2
+2022/02/01 09:21:07 [notice] 1#1: OS: Linux 5.16.0-arch1-1
+2022/02/01 09:21:07 [notice] 1#1: getrlimit(RLIMIT_NOFILE): 1048576:1048576
+2022/02/01 09:21:07 [notice] 1#1: start worker processes
+2022/02/01 09:21:07 [notice] 1#1: start worker process 7
+2022/02/01 09:21:07 [notice] 1#1: start worker process 8
+2022/02/01 09:21:07 [notice] 1#1: start worker process 9
+2022/02/01 09:21:07 [notice] 1#1: start worker process 10
+2022/02/01 09:21:07 [notice] 1#1: start worker process 11
+2022/02/01 09:21:07 [notice] 1#1: start worker process 12
+2022/02/01 09:21:07 [notice] 1#1: start worker process 13
+2022/02/01 09:21:07 [notice] 1#1: start worker process 14
+2022/02/01 09:23:41 [info] 8#8: *2 client 172.19.0.1 closed keepalive connection
+2022/02/01 09:23:42 [info] 8#8: *3 client 172.19.0.1 closed keepalive connection
+2022/02/01 09:23:43 [info] 8#8: *4 client 172.19.0.1 closed keepalive connection
+2022/02/01 09:24:33 [info] 8#8: *5 client 172.19.0.1 closed keepalive connection
+2022/02/01 09:24:34 [info] 8#8: *6 client 172.19.0.1 closed keepalive connection
+2022/02/01 09:24:34 [info] 8#8: *7 client 172.19.0.1 closed keepalive connection
