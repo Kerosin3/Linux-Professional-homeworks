@@ -4,19 +4,47 @@
 #Y запрашиваемых адресов (с наибольшим кол-вом запросов) с указанием кол-ва запросов c момента последнего запуска скрипта;
 #все ошибки c момента последнего запуска;
 #echo "starting working at $now"
+#----------multirunning protection-----------------------
+c_pid=$BASHPID # take current process pid
+pid="/var/tmp/script_test_$c_pid.pid" # setting filename
+trap "rm -f $pid" SIGSEGV # deleting when SIGSGV
+trap "rm -f $pid" SIGTERM # deleting when SIGSGV
+trap "rm -f $pid" SIGQUIT # deleting when SIGSGV
+trap "rm -f $pid" SIGINT  # deleting when ctrl c
+trap "rm -f $pid" SIGHUP # deleting when kill
+
+if [ -e $pid ]; then
+    echo "another instance of this scrip is already running, terminating."
+    kill -1 $$ # pid file exists, another instance is running
+else
+    echo $$ > $pid # pid file doesn't exit, create one and writing pid into it
+    if ! [ -e $pid ]; then # if file stimm does not exists then exiting...
+	    echo 'cannon create lock file, exiting....'
+	    kill -1 $$
+    fi
+fi
+
+
 rflag=false
 eflag=false
 modeflag0=false
 modeflag1=false
 filemane=''
-#creating log file to precess date
-if [[ -s .log ]]; then #exists and not empty
-  last_done=$(tail -n 1 .log)
-  now="$(date +'%d/%b/%Y:%H:%M:%S %z')" # setting now if the script runs for the first time
+#---------------creating log file to process date------------------------
+now_actual="$(date +'%d/%b/%Y:%H:%M:%S %z')" # actual now time
+loc_location="/var/tmp/error_analysis_test.log"
+if [[ -s "$loc_location" ]]; then #exists and not empty
+  last_done="$(tail -n 1 $loc_location)" # take last scrip run date
+  #now="$(date +'%d/%b/%Y:%H:%M:%S %z')" # setting now if the script runs for the first time
+  now=$last_done # now is last done!
   echo "last script run was at $last_done" # read timedone if it was once done
 else # not existing
-  touch .log #creating
-  now="$(date +'%d/%b/%Y:%H:%M:%S %z')" # setting now if the script runs for the first time
+  touch "$loc_location" #creating
+  if ! [[ -f "$loc_location" ]]; then
+	  echo "cannot create .log file, terminating..."
+	  kill -1 $$
+  fi
+  now=$now_actual # setting now if the script runs for the first time
   last_done=$now
 fi
 
@@ -45,7 +73,7 @@ function get_resources_calls {
 		if [ $count00 -eq 0  ] #check second time, have not to be eq to zero!
 		then
 			echo "unknown error while pattern matching, aborting..."
-			exit 1
+			kill -1 $$
 		fi
 		var_count_total=$((var_count_total + count00)) 
 		resource_calls["$count00"]="$resource" # assign
@@ -62,7 +90,7 @@ function get_resources_calls {
 	if [ $var_count_total -ne $n_requests ] #check if total counted resoucess call eq to n of call GET
 	then
 		echo "some error while counting, aborting..... $var_count_total != $n_requests"
-		exit 1
+		kill -1 $$
 	else
 		echo "ok"
 	fi
@@ -86,17 +114,27 @@ function search_time {
 	done
 	now2=${now::-5} # removing timezone for now time
 	last_call=${time_calls[$total_calls]} # last
-	j=0
 	start_analysis=1 # start from the very beginning
 	for i in $(seq 1 $total_calls); #sequential 
 	do
-	  if [[ ${time_calls[$i]} > ${now2} ]] # if current iteration date is greater than NOW2, then break and start from this date
+		kak=0
+		if [[ ${time_calls[$i]} > ${now2} ]]
+		then
+			kak=1
+		fi
+		echo "***************comparing ${time_calls[$i]} with > $now2 ::$kak  "
+	  if [[ ${time_calls[$i]} > ${now2} ]] # if current iteration date is greater than NOW2, we are outdate, then break and start from this date
 	  	then 
-			start_analysis=$i  # setting analysis start from
+			start_analysis=$i  # setting analysis start
 			break;
+		else
+			#else - print from the very beginning!!!!!!!!!!!!
+			echo "we are a way head of log file, printning from the very beginning"
+
 	  fi
 	done
-  echo  "analysis has started from n:$start_analysis, date: ${time_calls[$start_analysis]}"
+        echo  "analysis has started from n:$start_analysis, date: ${time_calls[$start_analysis]}"
+	echo  "analysis covers data till : $last_call"
 
 }
 #------------------------------------------------------------------------------------------------#
@@ -130,8 +168,10 @@ function print_error {
 					fi
 			fi
 		done
+		date_analysis_begins=$(echo "$dates_errors" | sed -n "$line_date_analysis p"| cut -f 1,2 -d ' ') #take date start analysis
+		date_analysis_ends=$(echo "$dates_errors" | sed -n "$dates_errors_n p"| cut -f 1,2 -d ' ') #take date ends analysis 
 		echo "----------------------------------------------------"
-		echo "analysing error file from $line_date_analysis'st line"
+		echo "analysing error file from $line_date_analysis'st line, date $date_analysis_begins, eng analysys at $date_analysis_ends"
 		echo "----------------------------------------------------"
 		out0=$(echo "$dates_errors" | tail -n +$line_date_analysis  | cut -f 1,2,4 -d ' ' | column -t -N date,time,error_code) # take i line and take date and time
 		echo "$out0"
@@ -158,7 +198,7 @@ done
 if [ $var_count_total -ne $nouniq_count ]
 then
 	echo 'aborting'
-	exit 1
+	kill -1 $$
 fi
 echo "----------------------------------------------------"
 echo "$count_n top acessed ip adressess:"
@@ -193,7 +233,9 @@ do
 			;;
 	esac
 done
+#=======================SEARCH TIME==============================
 search_time "$filename"
+
 #checking necessary flags
 if ((OPTIND == 1))
 then
@@ -209,15 +251,16 @@ fi
 if ! $rflag  || ! $eflag #&& [[ -d $1 ]]
 then
     echo "file to analysis and error file have to be specified, terminating..." >&2
-    exit 1
+    kill -1 $$
 fi
+
 #------------------------------------------------------------------------------------------------#
 #checking passed arguments
 #------------------------------------------------------------------------------------------------#
 if [ "$modeflag1" != true ] && [ "$modeflag0" != true  ]
 then
 	echo 'either i or p flag have to be specified, terminating'
-	exit 1
+	kill -1 $$
 else
 	if [ "$modeflag0" = true  ] 
 	then
@@ -225,7 +268,7 @@ else
 		if ! ([ "$count_n" -gt 0  ] && [ "$count_n" -le $uniq_t  ]) # if we counting smt greater 0 and lesser than max uniq ip in the file
 		then
 			echo 'specified value have to be greater that 0 and less or equal then uniq ip in the log, terminating...'
-			exit 1
+			kill -1 $$
 		fi
 
 	fi
@@ -236,13 +279,13 @@ else
 		if ! [ "$count_m" -gt 0  ]
 		then
 			echo 'specified value have to be greater that 0, terminating...'
-			exit 1
+			kill -1 $$
 		fi
 		if [ "$count_m" -gt "$all_resources_but_n_uniq" ]
 		then
 			echo "unique resources n: $all_resources_but_n_uniq"
 			echo 'entered number of resources have to be less than n of uniq resources in log file, aborting..'	
-			exit 1
+			kill -1 $$
 		fi
 
 	fi
@@ -265,20 +308,14 @@ fi
 
 
 #------------------------------------------------------------------------------------------------#
-if [ -w .log ] 
+if [ -w $loc_location ] #adding timing information
 then
-	echo "$now" >> .log # write this time script worked out
+	echo "$now_actual" >> "$loc_location" # write this time script worked out
 else
 	echo 'cannot write to .log file'
-	exit 1
+	kill -1 $$
 fi
 print_error
+rm -f $pid # removing temp pid file
 exit 0
-
-
-#exit
-######################main###################
-
-
-#
 
