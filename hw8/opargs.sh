@@ -113,17 +113,24 @@ function search_time {
 		time_calls["$call_n"]="$time_this_call" #filling array of times
 	done
 	now2=${now::-5} # removing timezone for now time
+	now2_t=$(echo $now2 | tr "/" ":")
 	last_call=${time_calls[$total_calls]} # last
+	last_call=$(date -d "$last_call")
 	start_analysis=1 # start from the very beginning
+	now2_t='14:Aug:2019:10:30:58'
 	for i in $(seq 1 $total_calls); #sequential 
 	do
+		call_temp=$(echo ${time_calls[$i]} | tr "/" ":")
+		call_temp=$(date -d "$call_temp")
+		echo "$last_call  =============================== $call_temp"
 		kak=0
-		if [[ ${time_calls[$i]} > ${now2} ]]
+		if [ ${call_temp} -gt ${now2_t} ]
 		then
 			kak=1
 		fi
-		echo "***************comparing ${time_calls[$i]} with > $now2 ::$kak  "
-	  if [[ ${time_calls[$i]} > ${now2} ]] # if current iteration date is greater than NOW2, we are outdate, then break and start from this date
+		echo "***************comparing ${call_temp} with > $now2_t ::$kak  "
+		#echo "***************comparing ${call_temp} with > $now2_t ::$kak  "
+	  if [ $call_temp -gt $now2_t ] # if current iteration date is greater than NOW2, we are outdate, then break and start from this date
 	  	then 
 			start_analysis=$i  # setting analysis start
 			break;
