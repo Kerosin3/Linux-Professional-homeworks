@@ -102,6 +102,19 @@ function get_resources_calls {
 	for x in "${!resource_calls[@]}"; do printf "page [%s] %s times\n" "${resource_calls[$x]}" "$x"; done  | tail -$count_m | tac | column -t
 }
 #------------------------------------------------------------------------------------------------#
+
+function append_zeros {
+	length_0=$(echo -n $1 | wc -m)
+	if [ "$length_0" == '1' ]
+	then
+		v1=0$1
+		echo -n $v1
+	else
+		echo -n $1
+	fi
+}
+
+#------------------------------------------------------------------------------------------------#
 #1 param - filename, #2 - date last run
 function search_time {
 	declare -A time_calls
@@ -115,22 +128,66 @@ function search_time {
 	now2=${now::-5} # removing timezone for now time
 	now2_t=$(echo $now2 | tr "/" ":")
 	last_call=${time_calls[$total_calls]} # last
-	last_call=$(date -d "$last_call")
+	#last_call=$(date -d "$last_call")
 	start_analysis=1 # start from the very beginning
-	now2_t='14:Aug:2019:10:30:58'
+	#now2_t='14:Aug:2019:10:30:58'
+	#---------------------date conversion-------------------
+	months=(Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec)
+	declare -A mlookup
+	for monthnum in ${!months[@]}
+		do
+	    	mlookup[${months[monthnum]}]=$((monthnum + 1))
+	done
+	#-----------------------------------------------------
+	#time_now=$(echo "$now2_t"|)
+	time_now=${now2_t:12:21}
+	time_now=" $time_now" # add whitespace
+	#echo "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa$time_now"
+	year=$(echo "$now2_t" | cut -f 3 -d ':') # get current month
+	month=$(echo "$now2_t" | cut -f 2 -d ':') # get current month
+	month_number=${mlookup["$month"]} # get number of the month
+	now2_t=$(echo $now2_t | sed "s/$month/$month_number/g" ) # change letters to numbers
+	month=$(append_zeros $month_number)
+	day=$(echo "$now2_t" | cut -f 1 -d ':') # get current month
+	day=$(append_zeros $day)
+	#echo "===================================="
+	new_now=''
+	new_now=$new_now$year$month$day$time_now 
+	now_from_epoh=$(date +%s -d "$new_now") 
+	echo "=================================now is $new_now, from epoh $now_from_epoh"
+	#date -d '20190902' +'%d-%m-%Y' change data format
 	for i in $(seq 1 $total_calls); #sequential 
 	do
-		call_temp=$(echo ${time_calls[$i]} | tr "/" ":")
-		call_temp=$(date -d "$call_temp")
-		echo "$last_call  =============================== $call_temp"
-		kak=0
-		if [ ${call_temp} -gt ${now2_t} ]
+		#procesing data formatting-------------------------------------------
+		v=${time_calls[$i]}
+		time_i=${v:12:21}
+		time_i=" $time_i" # add whitespace
+	#echo "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa$time_now"
+		call_temp=$(echo ${time_calls[$i]} | tr "/" ":") # replace / with :
+		month=$(echo "$call_temp" | cut -f 2 -d ':') # get current month
+		month_number=${mlookup["$month"]} # get number of the month
+		call_temp=$(echo $call_temp | sed "s/$month/$month_number/g" ) # change letters to numbers
+		#---
+		month=$(echo "$call_temp" | cut -f 2 -d ':') # get current month
+		month=$(append_zeros $month)
+		#echo "=========================="
+		#echo "$month"
+		#echo "=========================="
+		day=$(echo "$call_temp" | cut -f 1 -d ':') # get current month
+		day=$(append_zeros $day)
+		year=$(echo "$call_temp" | cut -f 3 -d ':') # get current month
+		new_date=''
+		new_date=$new_date$year$month$day$time_i
+		i_from_epoh=$(date +%s -d "$new_date") 
+		true_when_greater=0
+		if [ ${i_from_epoh} -gt ${now_from_epoh} ]
 		then
-			kak=1
+			true_when_greater=1
 		fi
-		echo "***************comparing ${call_temp} with > $now2_t ::$kak  "
+		echo "comparing ${call_temp} > $now2_t ::$true_when_greater "
+		echo "==============$i_from_epoh=======$now_from_epoh======"
 		#echo "***************comparing ${call_temp} with > $now2_t ::$kak  "
-	  if [ $call_temp -gt $now2_t ] # if current iteration date is greater than NOW2, we are outdate, then break and start from this date
+	  if [ "$true_when_greater" -eq "1" ] # if current iteration date is greater than NOW2, we are outdate, then break and start from this date
 	  	then 
 			start_analysis=$i  # setting analysis start
 			break;
