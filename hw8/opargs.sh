@@ -192,8 +192,10 @@ function search_time {
 			start_analysis=$i  # setting analysis start
 			break;
 		else
-			#else - print from the very beginning!!!!!!!!!!!!
-			echo "we are a way head of log file, printning from the very beginning"
+			if [ "$i" -eq "$total_calls" ]
+			then
+				echo "we are a way head of log file, printning from the very beginning"
+			fi
 
 	  fi
 	done
