@@ -1,0 +1,1 @@
+{"rsync":{"/vagrant":{"type":"rsync","guestpath":"/vagrant","hostpath":"/home/ker0/HWs/linux_hw/hw8","disabled":false,"__vagrantfile":true,"owner":"vagrant","group":"vagrant"}}}

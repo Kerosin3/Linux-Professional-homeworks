@@ -1,0 +1,61 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+#
+home_vb = ENV['VBOX_storage']
+ENV['GIT_DISCOVERY_ACROSS_FILESYSTEM'] = '1'
+
+MACHINES = {
+  :crontest => 
+    {
+	:box_name => "centos/8",
+        :box_version => "2011.0",
+        :hostname => "crontest",
+        :ram => 1024,
+        :cpu => 2,
+	:ip => "192.168.1.65",
+	:port_nginx => "8082",
+        :port_nginx_host => "8080",
+        :ssh_port => '4568'
+		
+  },
+}
+
+Vagrant.configure(2) do |config|
+  config.vagrant.plugins = "vagrant-vbguest"
+    MACHINES.each do |name,machine|
+        #config.vm.define machine[:hostname] do |node|
+        config.vm.define name do |node|
+            node.vm.box = machine[:box_name]
+            node.vm.box_version = machine[:box_version]
+            node.vm.hostname = machine[:hostname]
+            node.vbguest.auto_update = false
+            node.ssh.keys_only = true
+            node.ssh.insert_key = true
+            node.vm.network :private_network, :ip => machine[:ip]
+            node.vm.network :forwarded_port,host:machine[:ssh_port], guest:22,id:'ssh'
+            #node.vm.network :forwarded_port,host:machine[:port_nginx], guest:machine[:port_nginx_host]
+            node.vm.provider "virtualbox" do |vb_machine_settings|
+                vb_machine_settings.customize ["modifyvm", :id, "--memory", machine[:ram]]
+                vb_machine_settings.customize ["modifyvm", :id, "--cpus", machine[:cpu]]
+            end
+        end
+    config.vm.provision "file", source: "~/.ssh/id_rsa.pub", destination: "/home/vagrant/.ssh/id_rsa.pub"
+    config.vm.provision :shell, :inline => "cat /home/vagrant/.ssh/id_rsa.pub >> /home/vagrant/.ssh/authorized_keys"
+    config.vm.provision :shell, :inline => "sed -i 's/mirrorlist/#mirrorlist/g' /etc/yum.repos.d/CentOS-Linux-*"
+    config.vm.provision :shell, :inline => "sed -i 's|#baseurl=http://mirror.centos.org|baseurl=http://vault.centos.org|g' /etc/yum.repos.d/CentOS-Linux-*"
+    
+    config.vm.provision :shell, :inline => "dnf install centos-release-stream -y"
+    config.vm.provision :shell, :inline => "yum install python36 openssh-server  epel-release -y"
+    config.vm.provision :shell, :inline => "systemctl enable sshd"
+    config.vm.provision :shell, :inline => "systemctl start sshd"
+    config.vm.provision :shell, :inline => "echo -----------------shh keys copied!-----------------------"
+#
+
+    config.vm.provision "ansible", run: "always" do |ansible|
+      ansible.playbook = "vm_config.yml"
+    end
+
+    end
+end
+
+

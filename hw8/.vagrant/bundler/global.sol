@@ -1,0 +1,1 @@
+{"dependencies":[["dotenv-deployment",["~> 0.0.2"]],["dotenv",["~> 0.9"]],["vagrant-env",["= 0.0.3"]],["vagrant-reload",["= 0.0.1"]],["log4r",[">= 0"]],["concurrent-ruby",["~> 1.0"]],["i18n",[">= 0"]],["micromachine",[">= 2","< 4"]],["vagrant-vbguest",["= 0.30.0"]]],"checksum":"693744f1451162212505242aa752a8f61759ce0e5726a6ac57e2a1622062dd5f","vagrant_version":"2.2.19"}
