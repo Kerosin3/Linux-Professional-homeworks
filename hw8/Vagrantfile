@@ -45,17 +45,29 @@ Vagrant.configure(2) do |config|
     config.vm.provision :shell, :inline => "sed -i 's|#baseurl=http://mirror.centos.org|baseurl=http://vault.centos.org|g' /etc/yum.repos.d/CentOS-Linux-*"
     
     config.vm.provision :shell, :inline => "dnf install centos-release-stream -y"
-    config.vm.provision :shell, :inline => "yum install python36 openssh-server  epel-release -y"
+    config.vm.provision :shell, :inline => "yum install python36 openssh-server  epel-release gcc make -y"
     config.vm.provision :shell, :inline => "systemctl enable sshd"
     config.vm.provision :shell, :inline => "systemctl start sshd"
     config.vm.provision :shell, :inline => "echo -----------------shh keys copied!-----------------------"
-#
+#   
 
+    config.vm.provision "shell", inline: <<-SHELL
+            cd /root/
+            curl http://ftp.gnu.org/gnu/bash/bash-5.1.tar.gz -o bash5.1.tar.gz
+            tar -xf bash5.1.tar.gz --one-top-level=bash_sources
+            cd /root/bash_sources/bash-5.1
+            ./configure
+            make
+            make install
+            sh
+            echo "===================bash version 5.1 has been installed====================="
+          SHELL
+  
+    
     config.vm.provision "ansible", run: "always" do |ansible|
       ansible.playbook = "vm_config.yml"
     end
 
     end
 end
-
 

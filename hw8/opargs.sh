@@ -1,4 +1,4 @@
-#/bin/bash
+#!/usr/bin/sh
 #echo
 #X IP адресов (с наибольшим кол-вом запросов) с указанием кол-ва запросов c момента последнего запуска скрипта;
 #Y запрашиваемых адресов (с наибольшим кол-вом запросов) с указанием кол-ва запросов c момента последнего запуска скрипта;
@@ -371,7 +371,7 @@ fi
 flag_t=0
 if [ "$modeflag1" != true ] && [ "$modeflag0" != true  ]
 then
-	kill -1 $c_pid
+	kill -1 $$
 	echo 'either i or p flag have to be specified, terminating'
 else
 	if [ "$modeflag0" = true  ] 

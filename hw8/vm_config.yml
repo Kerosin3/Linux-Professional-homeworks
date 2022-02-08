@@ -5,16 +5,19 @@
   become: true
   vars:
     test_version: 1
-    installed_soft: ['git','net-tools','vim','mc','policycoreutils-python-utils','crontabs','ack','nginx']
+    installed_soft: ['git','net-tools','vim','mc','policycoreutils-python-utils','crontabs','ack','nginx','sendmail']
     mail_to_send: 'sample_a@mail.ru'
     script_source: '/home/vagrant/script_nginx.sh'
+    ###################################################
     true_log: '/var/log/nginx/access.log'
     true_errors: '/var/log/nginx/errors.log'
+    ###################################################
     test_log: '/home/vagrant/tests/access.log'
     test_errors: '/home/vagrant/tests/errors.log'
-    command_to_run: "{{ script_source }} -i 10 -p 10 -f /var/log/nginx/access.log -e /var/log/nginx/error.log" #10 ip and 10 pages
-    command_to_run_min: "{{ script_source }} -i 10 -p 10 -f {{ test_log }} -e {{ test_errors }}" #10 ip and 10 pages
-
+    ###################################################
+    command_to_run: "{{ script_source }} -i 10 -p 10 -f {{ true_log }} -e {{ true_errors }}" #10 ip and 10 pages
+    command_to_run_min: "sh -c {{ script_source }} -i 10 -p 10 -f {{ test_log }} -e {{ test_errors }}" #10 ip and 10 pages
+    cron_file: '/var/spool/cron/vagrant'
 
   tasks:
   - name: installing soft
@@ -32,7 +35,7 @@
     ansible.builtin.copy:
       src: opargs.sh
       dest: "{{ script_source }}"
-      mode: u=rX,g=rX,o=rwX
+      mode: u+rwx,g=r,o=r
       owner: vagrant
       group: vagrant
     register: result
@@ -54,20 +57,22 @@
     ansible.builtin.file:
       path: /home/vagrant/tests
       state: directory
-      mode: '0755'
+      owner: vagrant
+      group: vagrant
+      mode: 0755
     register: create0
   - name: copying test log
     ansible.builtin.copy:
-      src: ./tests/error_log.bk
+      src: ./tests/access-4560-644067.log_bkp
       dest: "{{ test_log }}"
       mode: u=rX,g=rX,o=rwX
       owner: vagrant
       group: vagrant
     when: create0.state == 'directory'
     register: result_cpy0
-  - name: copying test log
+  - name: copying test error log
     ansible.builtin.copy:
-      src: ./tests/access-4560-644067.log_bkp
+      src: ./tests/error_log.bk
       dest: "{{ test_errors }}"
       mode: u=rX,g=rX,o=rwX
       owner: vagrant
@@ -79,16 +84,23 @@
       name: "setting log checker"
       day: "*"
       hour: "*"
-      minute: "5"
+      minute: "*/3"
       user: vagrant
+      state: present
       job: "{{ command_to_run_min }}"
-    with_items:
-    - env: true
-      name: MAILTO
-      job: "{{ mail_to_send }}"
+        #with_items:
+        #- env: true
+        #name: MAILTO
+        #job: "{{ mail_to_send }}"
     when: (result_cpy0.state == 'file') and (result_cpy1.state == 'file')
     notify: restart_crond
-      #- cron:
+    register: cron
+  - name: inserting mail to test job
+    ansible.builtin.lineinfile:
+      path: "{{ cron_file }}" #user register cron??
+      insertbefore: '#Ansible: setting log checker'
+      line: "MAILTO={{ mail_to_send }}"
+      #- cron: PATH=/usr/local/bin:/bin:/usr/bin
       #cron_file: ansible_test
       #env: "{{ item.env }}"
       #name: "{{ item.name }}"
@@ -101,6 +113,11 @@
       #- env: false
       #name: cmd
       #job: /bin/true
+  - name: change filetype
+    ansible.builtin.command: chcon -t user_cron_spool_t /var/spool/cron/vagrant
+    register: filechange
+    notify: restart_crond
+
   handlers:
     - name: restart_crond
       service:
