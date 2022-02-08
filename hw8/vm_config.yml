@@ -84,7 +84,7 @@
       name: "setting log checker"
       day: "*"
       hour: "*"
-      minute: "*/3"
+      minute: "*/1"
       user: vagrant
       state: present
       job: "{{ command_to_run_min }}"
@@ -105,6 +105,23 @@
       path: "{{ cron_file }}" #user register cron??
       insertbefore: '#Ansible: setting log checker'
       line: "PATH=/usr/local/bin:/bin:/usr/bin"
+  - name: fix sendmail
+    ansible.builtin.lineinfile:
+      path: "/etc/hosts" #user register cron??
+      insertafter: "EOF"
+      state: present
+      line: "127.0.1.1 localhost localhost.localdomain crontest"
+    register: sendmail
+  - name: enable sendmail service
+    systemd:
+      name: sendmail
+      state: restarted
+      enabled: True 
+    when: sendmail.failed != 'false'
+    notify: restart_crond
+  - name: print home_dirs variable
+    ansible.builtin.debug:
+      var: sendmail
       #cron_file: ansible_test
       #env: "{{ item.env }}"
       #name: "{{ item.name }}"
@@ -126,5 +143,9 @@
     - name: restart_crond
       service:
         name=crond
+        state=restarted
+    - name: restart_send_mail
+      service:
+        name=sendmail
         state=restarted
 
