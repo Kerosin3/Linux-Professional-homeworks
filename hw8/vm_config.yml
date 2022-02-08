@@ -115,8 +115,8 @@
   - name: enable sendmail service
     systemd:
       name: sendmail
-      state: restarted
-      enabled: True 
+      state: stopped
+      enabled: False 
     when: sendmail.failed != 'false'
     notify: restart_crond
   - name: print home_dirs variable
