@@ -16,7 +16,7 @@
     test_errors: '/home/vagrant/tests/errors.log'
     ###################################################
     command_to_run: "{{ script_source }} -i 10 -p 10 -f {{ true_log }} -e {{ true_errors }}" #10 ip and 10 pages
-    command_to_run_min: "sh -c {{ script_source }} -i 10 -p 10 -f {{ test_log }} -e {{ test_errors }}" #10 ip and 10 pages
+    command_to_run_min: "sh -c '{{ script_source }} -i 10 -p 10 -f {{ test_log }} -e {{ test_errors }}'" #10 ip and 10 pages
     cron_file: '/var/spool/cron/vagrant'
 
   tasks:
@@ -100,7 +100,11 @@
       path: "{{ cron_file }}" #user register cron??
       insertbefore: '#Ansible: setting log checker'
       line: "MAILTO={{ mail_to_send }}"
-      #- cron: PATH=/usr/local/bin:/bin:/usr/bin
+  - name: insert path
+    ansible.builtin.lineinfile:
+      path: "{{ cron_file }}" #user register cron??
+      insertbefore: '#Ansible: setting log checker'
+      line: "PATH=/usr/local/bin:/bin:/usr/bin"
       #cron_file: ansible_test
       #env: "{{ item.env }}"
       #name: "{{ item.name }}"
