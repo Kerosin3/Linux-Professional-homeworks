@@ -5,7 +5,7 @@
   become: true
   vars:
     test_version: 1
-    installed_soft: ['git','net-tools','vim','mc','policycoreutils-python-utils','crontabs','ack','nginx','sendmail']
+    installed_soft: ['git','net-tools','vim','mc','policycoreutils-python-utils','crontabs','ack','nginx','sendmail','mailx']
     mail_to_send: 'sample_a@mail.ru'
     script_source: '/home/vagrant/script_nginx.sh'
     ###################################################
@@ -15,10 +15,13 @@
     test_log: '/home/vagrant/tests/access.log'
     test_errors: '/home/vagrant/tests/errors.log'
     ###################################################
-    command_to_run: "{{ script_source }} -i 10 -p 10 -f {{ true_log }} -e {{ true_errors }}" #10 ip and 10 pages
-    command_to_run_min: "sh -c '{{ script_source }} -i 10 -p 10 -f {{ test_log }} -e {{ test_errors }}'" #10 ip and 10 pages
+    command1: '"/home/vagrant/file-$(date +\%d-\%H-\%M).log"'
+      #command_to_run: "{{ script_source }} -i 10 -p 10 -f {{ true_log }} -e {{ true_errors }}" #10 ip and 10 pages
+      #command_to_run: "{{ script_source }} -i 10 -p 10 -f {{ true_log }} -e {{ true_errors }}" #10 ip and 10 pages
+    command_to_run: "{{ script_source }} -i 10 -p 10 -f {{ test_log }} -e {{ test_errors }} 2>/dev/null" #10 ip and 10 pages
+    command_to_run_min: "{{ script_source }} -i 10 -p 10 -f {{ test_log }} -e {{ test_errors }} >> {{ command1 }} 2>/dev/null" #10 ip and 10 pages
     cron_file: '/var/spool/cron/vagrant'
-
+    insert_env: ['SHELL=/bin/bash','PATH=/usr/local/bin:/bin:$PATH']
   tasks:
   - name: installing soft
     ansible.builtin.yum:
@@ -42,8 +45,8 @@
   - name: copying cron_job
     ansible.builtin.template:
       src: cron_run.j2
-      dest: /etc/cron.daily/cron_job0
-      mode: 600
+      dest: /etc/cron.d/cron_job0
+      mode: 0644
       owner: root
     when: result.state == 'file'
     notify: restart_crond
@@ -99,12 +102,15 @@
     ansible.builtin.lineinfile:
       path: "{{ cron_file }}" #user register cron??
       insertbefore: '#Ansible: setting log checker'
-      line: "MAILTO={{ mail_to_send }}"
+      line: "#MAILTO={{ mail_to_send }}"
   - name: insert path
     ansible.builtin.lineinfile:
       path: "{{ cron_file }}" #user register cron??
       insertbefore: '#Ansible: setting log checker'
-      line: "PATH=/usr/local/bin:/bin:/usr/bin"
+      line: "{{ item }}"
+    loop: "{{ insert_env }}"
+        #line: "PATH=/usr/local/bin:/bin:/usr/bin"
+
   - name: fix sendmail
     ansible.builtin.lineinfile:
       path: "/etc/hosts" #user register cron??

@@ -59,7 +59,8 @@ Vagrant.configure(2) do |config|
             ./configure
             make
             make install
-            sh
+            mv /bin/bash /bin/bash3 # move old
+            ln -s /usr/local/bin/bash /bin/bash #change version
             echo "===================bash version 5.1 has been installed====================="
           SHELL
   
