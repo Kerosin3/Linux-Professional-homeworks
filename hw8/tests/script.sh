@@ -1,10 +1,14 @@
-#!/usr/bin/sh
+#!/bin/bash
 #echo
 #X IP адресов (с наибольшим кол-вом запросов) с указанием кол-ва запросов c момента последнего запуска скрипта;
 #Y запрашиваемых адресов (с наибольшим кол-вом запросов) с указанием кол-ва запросов c момента последнего запуска скрипта;
 #все ошибки c момента последнего запуска;
 #echo "starting working at $now"
 #----------multirunning protection-----------------------
+echo "================================="
+bash -version
+echo $SHELL
+echo "================================="
 c_pid=$BASHPID # take current process pid
 pid="/var/tmp/script_test_$c_pid.pid" # setting filename
 trap "rm -f $pid" SIGSEGV # deleting when SIGSGV
@@ -47,7 +51,21 @@ else # not existing
   now=$now_actual # setting now if the script runs for the first time
   last_done=$now
 fi
-
+#------------------------------------------------------------------------------------------------#
+function sort_by {
+    local field sort_params elem
+    field=$1
+    # Build array with sort parameters
+    [[ $2 == 'desc' ]] && sort_params+=('-r')
+    [[ $field == 'age' ]] && sort_params+=('-n')
+    # Schwartzian transform, 
+    # get piped array contents from $(cat)
+    while read -r elem; do
+        declare -n ref=$elem
+        printf '%s\t%s\n' "${ref["$field"]}" "$elem"
+    done | sort "${sort_params[@]}" | cut -f2 | tr '\n' ' '
+}
+#
 #------------------------------------------------------------------------------------------------#
 # 1 param - filename, 
 function get_resources_calls {
@@ -61,6 +79,7 @@ function get_resources_calls {
 	declare -A resources_calls
 	var_count_total=0
 	iter0=0 
+#	echo "=======================$unique_resources=========================="
 	for resource in $unique_resources # for each unique resource
 	do
 		count00=0
@@ -75,8 +94,9 @@ function get_resources_calls {
 			echo "unknown error while pattern matching, aborting..."
 			kill -1 $$
 		fi
+		resource=$(echo \["$resource"])
 		var_count_total=$((var_count_total + count00)) 
-		resource_calls["$count00"]="$resource" # assign
+		resources_calls[$resource]="$count00" # assign
     done
     main_page='/'
 	main_page_count=0
@@ -84,7 +104,8 @@ function get_resources_calls {
 	if [ $main_page_count -ne 0 ] 
 	then
 		var_count_total=$((var_count_total + main_page_count))
-		resource_calls["$main_page_count"]="/"
+#		resources_calls["$main_page_count"]="/"
+		resources_calls["[/]"]="$main_page_count"
 	fi
 
 	if [ $var_count_total -ne $n_requests ] #check if total counted resoucess call eq to n of call GET
@@ -94,12 +115,12 @@ function get_resources_calls {
 	else
 		echo "ok"
 	fi
-#	for n_calls in "${!resource_calls[@]}"; do
-#  		echo " n calls:$n_calls, resource -> ${resource_calls[$n_calls]}"
+#	for resource_page in "${!resources_calls[@]}"; do
+ # 		echo " resource: $resource_page, n of calls -> ${resources_calls[$resource_page]}"
 #	done
 	echo "----------------------------------------------------"
 	echo "$count_m top requested pages"
-	for x in "${!resource_calls[@]}"; do printf "page [%s] %s times\n" "${resource_calls[$x]}" "$x"; done  | tail -$count_m | tac | column -t
+	for x in "${!resources_calls[@]}"; do printf "page %s %s times\n" "$x" "${resources_calls[$x]}";  done  | sort -t ' ' -k 3 -n | tail -$count_m | tac | column -t
 }
 #------------------------------------------------------------------------------------------------#
 
@@ -114,6 +135,7 @@ function append_zeros {
 	fi
 }
 
+#------------------------------------------------------------------------------------------------#
 #------------------------------------------------------------------------------------------------#
 #1 param - filename, #2 - date last run
 function search_time {
@@ -377,7 +399,7 @@ else
 	if [ "$modeflag0" = true  ] 
 	then
 		uniq_t=$(sed -n '/^[[:digit:]][[:digit:]][[:digit:]]*/p' $filename  |cut -f 1 -d '-' | sort --unique | wc -l ) #unique count
-		echo "UNIQUE+++++++++++$count_n++++++++++++$uniq_t"
+		#echo "UNIQUE+++++++++++$count_n++++++++++++$uniq_t"
 		if ! ([ "$count_n" -gt 0  ] && [ "$count_n" -le $uniq_t  ]) # if we counting smt greater 0 and lesser than max uniq ip in the file
 		then
 			echo 'specified value have to be greater that 0 and less or equal then uniq ip in the log, terminating...'
@@ -389,7 +411,7 @@ else
 	if [ "$modeflag1" = true  ] 
 	then
 		all_resources_but_n_uniq=$(cat $filename |  ack --output='$1' 'GET (/\S+?(?=\s))'| sort --unique | wc -l) # start fron start analysis_date and get all GET requests resources names !!! counting just UNIQUE , NOW FROM THE DATE
-		echo "UNIQUE+PAGES+++++++++++$count_m+++++++++++$all_resources_but_n_uniq"
+		#echo "UNIQUE+PAGES+++++++++++$count_m+++++++++++$all_resources_but_n_uniq"
 		if ! [ "$count_m" -gt 0  ]
 		then
 			echo 'specified value have to be greater that 0, terminating...'
