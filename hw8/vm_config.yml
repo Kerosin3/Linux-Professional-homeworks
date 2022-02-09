@@ -5,7 +5,14 @@
   become: true
   vars:
     test_version: 1
+    ###################################################
+    ###################################################
+    n_ip_to_watch: 10
+    n_resources_to_watch: 10
+    ###################################################
+    ###################################################
     installed_soft: ['git','net-tools','vim','mc','policycoreutils-python-utils','crontabs','ack','nginx','sendmail','mailx']
+    ###################################################
     mail_to_send: 'sample_a@mail.ru'
     script_source: '/home/vagrant/script_nginx.sh'
     ###################################################
@@ -18,8 +25,8 @@
     command1: '"/home/vagrant/file-$(date +\%d-\%H-\%M).log"'
       #command_to_run: "{{ script_source }} -i 10 -p 10 -f {{ true_log }} -e {{ true_errors }}" #10 ip and 10 pages
       #command_to_run: "{{ script_source }} -i 10 -p 10 -f {{ true_log }} -e {{ true_errors }}" #10 ip and 10 pages
-    command_to_run: "{{ script_source }} -i 10 -p 10 -f {{ test_log }} -e {{ test_errors }} 2>/dev/null" #10 ip and 10 pages
-    command_to_run_min: "{{ script_source }} -i 10 -p 10 -f {{ test_log }} -e {{ test_errors }} >> {{ command1 }} 2>/dev/null" #10 ip and 10 pages
+    command_to_run: "{{ script_source }} -i {{ n_ip_to_watch }} -p {{ n_resources_to_watch }} -f {{ test_log }} -e {{ test_errors }} 2>/dev/null" #10 ip and 10 pages
+    command_to_run_min: "{{ script_source }} -i {{ n_ip_to_watch }} -p {{ n_resources_to_watch }}  -f {{ test_log }} -e {{ test_errors }} >> {{ command1 }} 2>/dev/null" #10 ip and 10 pages
     cron_file: '/var/spool/cron/vagrant'
     insert_env: ['SHELL=/bin/bash','PATH=/usr/local/bin:/bin:$PATH']
   tasks:
@@ -121,8 +128,8 @@
   - name: enable sendmail service
     systemd:
       name: sendmail
-      state: stopped
-      enabled: False 
+      state: started
+      enabled: True
     when: sendmail.failed != 'false'
     notify: restart_crond
   - name: print home_dirs variable

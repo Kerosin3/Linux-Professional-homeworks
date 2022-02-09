@@ -1,2 +1,4 @@
-#MAILTO="{{ mail_to_send }}"
-*/1 * * * * "{{ command_to_run  }}"
+MAILTO="{{ mail_to_send }}"
+SHELL=/bin/bash
+PATH=/usr/local/bin:/bin:$PATH
+*/1 * * * * root "{{ command_to_run  }}"
