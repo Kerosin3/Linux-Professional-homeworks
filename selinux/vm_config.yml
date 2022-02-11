@@ -1,0 +1,164 @@
+---
+- name: adding_cron
+  hosts: crontest
+  gather_facts: true
+  become: true
+  vars:
+    test_version: 1
+    ###################################################
+    ###################################################
+    n_ip_to_watch: 10
+    n_resources_to_watch: 10
+    ###################################################
+    ###################################################
+    installed_soft: ['git','net-tools','vim','mc','policycoreutils-python-utils','crontabs','ack','nginx','sendmail','mailx']
+    ###################################################
+    mail_to_send: 'sample_a@mail.ru'
+    script_source: '/home/vagrant/script_nginx.sh'
+    ###################################################
+    true_log: '/var/log/nginx/access.log'
+    true_errors: '/var/log/nginx/errors.log'
+    ###################################################
+    test_log: '/home/vagrant/tests/access.log'
+    test_errors: '/home/vagrant/tests/errors.log'
+    ###################################################
+    command1: '"/home/vagrant/file-$(date +\%d-\%H-\%M).log"'
+      #command_to_run: "{{ script_source }} -i 10 -p 10 -f {{ true_log }} -e {{ true_errors }}" #10 ip and 10 pages
+      #command_to_run: "{{ script_source }} -i 10 -p 10 -f {{ true_log }} -e {{ true_errors }}" #10 ip and 10 pages
+    command_to_run: "{{ script_source }} -i {{ n_ip_to_watch }} -p {{ n_resources_to_watch }} -f {{ test_log }} -e {{ test_errors }} 2>/dev/null" #10 ip and 10 pages
+    command_to_run_min: "{{ script_source }} -i {{ n_ip_to_watch }} -p {{ n_resources_to_watch }}  -f {{ test_log }} -e {{ test_errors }} >> {{ command1 }} 2>/dev/null" #10 ip and 10 pages
+    cron_file: '/var/spool/cron/vagrant'
+    insert_env: ['SHELL=/bin/bash','PATH=/usr/local/bin:/bin:$PATH']
+  tasks:
+  - name: installing soft
+    ansible.builtin.yum:
+      name:
+        - "{{ item }}"
+      state: present
+    loop: "{{ installed_soft  }}"
+  - name: enable crond service
+    systemd:
+      name: crond
+      state: started
+      enabled: True
+  - name: copying shell script
+    ansible.builtin.copy:
+      src: opargs.sh
+      dest: "{{ script_source }}"
+      mode: u+rwx,g=r,o=r
+      owner: vagrant
+      group: vagrant
+    register: result
+  - name: copying cron_job
+    ansible.builtin.template:
+      src: cron_run.j2
+      dest: /etc/cron.d/cron_job0
+      mode: 0644
+      owner: root
+    when: result.state == 'file'
+    notify: restart_crond
+  - name: enable nginx service
+    systemd:
+      name: nginx
+      state: started
+      enabled: True 
+#copying test files
+  - name: creating test directory
+    ansible.builtin.file:
+      path: /home/vagrant/tests
+      state: directory
+      owner: vagrant
+      group: vagrant
+      mode: 0755
+    register: create0
+  - name: copying test log
+    ansible.builtin.copy:
+      src: ./tests/access-4560-644067.log_bkp
+      dest: "{{ test_log }}"
+      mode: u=rX,g=rX,o=rwX
+      owner: vagrant
+      group: vagrant
+    when: create0.state == 'directory'
+    register: result_cpy0
+  - name: copying test error log
+    ansible.builtin.copy:
+      src: ./tests/error_log.bk
+      dest: "{{ test_errors }}"
+      mode: u=rX,g=rX,o=rwX
+      owner: vagrant
+      group: vagrant
+    when: create0.state == 'directory'
+    register: result_cpy1
+  - name: setting test job min
+    ansible.builtin.cron:
+      name: "setting log checker"
+      day: "*"
+      hour: "*"
+      minute: "*/1"
+      user: vagrant
+      state: present
+      job: "{{ command_to_run_min }}"
+        #with_items:
+        #- env: true
+        #name: MAILTO
+        #job: "{{ mail_to_send }}"
+    when: (result_cpy0.state == 'file') and (result_cpy1.state == 'file')
+    notify: restart_crond
+    register: cron
+  - name: inserting mail to test job
+    ansible.builtin.lineinfile:
+      path: "{{ cron_file }}" #user register cron??
+      insertbefore: '#Ansible: setting log checker'
+      line: "#MAILTO={{ mail_to_send }}"
+  - name: insert path
+    ansible.builtin.lineinfile:
+      path: "{{ cron_file }}" #user register cron??
+      insertbefore: '#Ansible: setting log checker'
+      line: "{{ item }}"
+    loop: "{{ insert_env }}"
+        #line: "PATH=/usr/local/bin:/bin:/usr/bin"
+
+  - name: fix sendmail
+    ansible.builtin.lineinfile:
+      path: "/etc/hosts" #user register cron??
+      insertafter: "EOF"
+      state: present
+      line: "127.0.1.1 localhost localhost.localdomain crontest"
+    register: sendmail
+  - name: enable sendmail service
+    systemd:
+      name: sendmail
+      state: started
+      enabled: True
+    when: sendmail.failed != 'false'
+    notify: restart_crond
+  - name: print home_dirs variable
+    ansible.builtin.debug:
+      var: sendmail
+      #cron_file: ansible_test
+      #env: "{{ item.env }}"
+      #name: "{{ item.name }}"
+      #job: "{{ item.job }}"
+      #user: vagrant
+      #with_items:
+      #- env: true
+      #name: MAILTO
+      #job: test@test.com
+      #- env: false
+      #name: cmd
+      #job: /bin/true
+  - name: change filetype
+    ansible.builtin.command: chcon -t user_cron_spool_t /var/spool/cron/vagrant
+    register: filechange
+    notify: restart_crond
+
+  handlers:
+    - name: restart_crond
+      service:
+        name=crond
+        state=restarted
+    - name: restart_send_mail
+      service:
+        name=sendmail
+        state=restarted
+
