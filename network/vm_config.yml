@@ -1,0 +1,26 @@
+---
+- name: test_network
+  hosts: centralrouter 
+  gather_facts: true
+  become: true
+  remote_user: root
+  vars:
+    test_version: 1
+    installed_soft: ['git','mc']
+  tasks:
+  - name: installing soft
+    ansible.builtin.yum:
+      name:
+        - "{{ item }}"
+      state: present
+    loop: "{{ installed_soft  }}"
+  handlers:
+    - name: restart_crond
+      service:
+        name=crond
+        state=restarted
+    - name: restart_send_mail
+      service:
+        name=sendmail
+        state=restarted
+

@@ -1,0 +1,6 @@
+test_hosts:
+    hosts:
+        centralrouter:
+           ansible_port: 2020
+           ansible_hostname: localhost
+
