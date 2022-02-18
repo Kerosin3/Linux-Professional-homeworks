@@ -1,11 +1,11 @@
 ---
-- name: test_network
-  hosts: centralrouter 
+- name: routers_soft
+  hosts: all 
   gather_facts: true
   become: true
   vars:
     test_version: 1
-    installed_soft: ['git','mc']
+    installed_soft: ['git','mc','iproute','tcpdump','net-tools']
 
   tasks:
   - name: installing soft
@@ -18,7 +18,7 @@
     ansible.builtin.yum:
       name: net-tools
       state: present
-    when: ansible_hostname == 'centralrouter'
+        #    when: ansible_hostname == 'centralrouter'
 
 
   handlers:
@@ -31,3 +31,23 @@
         name=sendmail
         state=restarted
 
+- name: inet_routers
+  hosts: centralrouter  
+  gather_facts: true
+  become: true
+  vars:
+    test_version: 1
+    installed_soft: ['git','mc','iproute']
+
+  tasks:
+    #  - name: setting facts 
+    #ansible.builtin.set_fact:
+    #  ansible_default_ipv4.interface: 'eth0'
+    #  ansible_default_ipv4.gateway: '192.168.255.1'
+  - name: print facts
+    ansible.builtin.debug:
+      #      msg: "{{ ansible_hostname }}"
+      #      msg: "{{ ansible_default_ipv4.address }}"
+      #      msg: "IPv4 address: {{ ansible_default_ipv4[address] }} {{ ansible_default_ipv4[gateway] }} {{ ansible_default_ipv4[interface] }}"
+      msg: "{{ ansible_default_ipv4[address] }}"
+ 
