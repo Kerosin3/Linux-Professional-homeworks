@@ -9,7 +9,7 @@
 
   tasks:
   - name: installing soft
-    ansible.builtin.yum:
+    ansible.builtin.package:
       name:
         - "{{ item }}"
       state: present
