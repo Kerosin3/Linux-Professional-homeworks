@@ -1,19 +1,15 @@
 all:
   hosts:
       inetrouter:
-           ansible_ssh_private_key: '~/.ssh/id_rsa' 
-
   children:
     routers:
       hosts:
         centralrouter:
-           ansible_ssh_private_key: '~/.ssh/id_rsa' 
     servers:
       hosts:
         centalserver:
-           ansible_ssh_private_key: '~/.ssh/id_rsa' 
   vars:
     ansible_user: vagrant
     ansible_host: 127.0.0.1
     test_var: 'hahaha'
-
+    ansible_ssh_private_key: '~/.ssh/id_rsa' 

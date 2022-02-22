@@ -59,8 +59,8 @@ MACHINES = {
   },
 
   :office1router => {
-        :box_name => "centos/7",
-        :box_version => "2004.01",
+        :box_name => "ubuntu/trusty64",
+        :box_version => "20190514.0.0",
         :hostname => "office1router",
         :ram => 1024,
         :cpu => 2,
@@ -73,7 +73,7 @@ MACHINES = {
                 ]
   },
 :office1server => {
-        :box_name => "ubuntu/rusty64",
+        :box_name => "ubuntu/trusty64",
         :box_version => "20190514.0.0",
         :hostname => "office1server",
         :ram => 1024,
@@ -125,7 +125,7 @@ Vagrant.configure("2") do |config|
         
         box.vm.provision "shell", inline: <<-SHELL
                  yum update
-                 yum install epel-release centos-release-scl -y
+                 yum install epel-release centos-release-scl iptables iptables-services -y
 #                yum install -y rh-python38 which
 #                 yum install -y python3
  #                rm -f /usr/bin/python
@@ -142,26 +142,24 @@ Vagrant.configure("2") do |config|
  #       box.vm.provision :shell, :inline => "sed -i 's|#baseurl=http://mirror.centos.org|baseurl=http://vault.centos.org|g' /etc/yum.repos.d/CentOS-Linux-*"
   #      box.vm.provision :shell, :inline => "dnf install centos-release-stream -y"
     
-        box.vm.provision "ansible", run: "always" do |ansible|
-          ansible.playbook = "vm_config.yml"
-        end
-
-
+   
         case boxname.to_s
         when "inetrouter"
           box.vm.provision "shell", run: "always", inline: <<-SHELL
+            systemctl stop firewalld
+            systemctl disable firewalld
             sysctl net.ipv4.conf.all.forwarding=1
             iptables -t nat -A POSTROUTING ! -d 192.168.0.0/16 -o eth0 -j MASQUERADE
-            ip r add 192.168.255.4/30 via 192.168.255.2 # office 2 net !!!!
+            #ip r add 192.168.255.4/30 via 192.168.255.2 # office 2 net !!!!
             #ip r add 192.168.255.7/30 via 192.168.255.2 # office 1 net !!!!
             SHELL
         when "centralrouter"
           box.vm.provision "shell", run: "always", inline: <<-SHELL
             sysctl net.ipv4.conf.all.forwarding=1
-            echo "DEFROUTE=no" >> /etc/sysconfig/network-scripts/ifcfg-eth0 
-            echo "GATEWAY=192.168.255.1" >> /etc/sysconfig/network-scripts/ifcfg-eth1
-            ip r del default
-            ip route add 0.0.0.0/0 via 192.168.255.1
+            #echo "DEFROUTE=no" >> /etc/sysconfig/network-scripts/ifcfg-eth0  #disabling inet
+            #echo "GATEWAY=192.168.255.1" >> /etc/sysconfig/network-scripts/ifcfg-eth1
+            #ip r del default
+            #ip route add 0.0.0.0/0 via 192.168.255.1
             #--------------------
             #ethoffice1=$(ip route list 192.168.255.9/30 | awk '{print $3}')
             #echo "=====$ethoffice1======"
@@ -189,33 +187,30 @@ Vagrant.configure("2") do |config|
         when "office1router"
           box.vm.provision "shell", run: "always", inline: <<-SHELL
             sysctl net.ipv4.conf.all.forwarding=1
-            echo "DEFROUTE=no" >> /etc/sysconfig/network-scripts/ifcfg-eth0 
-            echo "GATEWAY=192.168.255.9" >> /etc/sysconfig/network-scripts/ifcfg-eth1
-             #--------------------
-            #ethoffice1=$(ip route list 192.168.255.10/30 | awk '{print $3}')
-            #echo "=====$ethoffice1======"
-            #ifconfig $ethoffice1 192.168.255.8 netmask 255.255.255.252
-            #---------------------
-            ip r del default
-            ip route add 0.0.0.0/0 via 192.168.255.9
-            ip route add 192.168.255.8/30 via 192.168.255.9 # added 8 network via 9 
-            systemctl restart network
+            #echo "DEFROUTE=no" >> /etc/sysconfig/network-scripts/ifcfg-eth0 
+            #echo "GATEWAY=192.168.255.9" >> /etc/sysconfig/network-scripts/ifcfg-eth1
+            #ip r del default
+            #ip route add 0.0.0.0/0 via 192.168.255.9
+            #ip route add 192.168.255.8/30 via 192.168.255.9 # added 8 network via 9 
+            #systemctl restart network
             SHELL
  when "office1server"
           box.vm.provision "shell", run: "always", inline: <<-SHELL
             sysctl net.ipv4.conf.all.forwarding=1
-            echo "DEFROUTE=no" >> /etc/sysconfig/network-scripts/ifcfg-eth0 
-            echo "GATEWAY=192.168.2.129" >> /etc/sysconfig/network-scripts/ifcfg-eth1
-            ip r del default
-            ip route add 0.0.0.0/0 via 192.168.2.129
-            ip route add 192.168.2.128/26 via 192.168.255.9 # added 128 via 129
-            systemctl restart network
+            #echo "DEFROUTE=no" >> /etc/sysconfig/network-scripts/ifcfg-eth0 
+            #echo "GATEWAY=192.168.2.129" >> /etc/sysconfig/network-scripts/ifcfg-eth1
+            #ip r del default
+            #ip route add 0.0.0.0/0 via 192.168.2.129
+            #ip route add 192.168.2.128/26 via 192.168.255.9 # added 128 via 129
+            #systemctl restart network
             SHELL
  
-
- 
         end
-        
+      box.vm.provision "ansible", run: "always" do |ansible|
+          ansible.playbook = "vm_config.yml"
+        end
+
+    
         
 
       end

@@ -1,0 +1,6 @@
+{% for item in ip_to_route %}
+{{ item }} via {{ gateway_def }}
+{% endfor %}
+
+
+##{{ hostvars[inventory_hostname] }}
