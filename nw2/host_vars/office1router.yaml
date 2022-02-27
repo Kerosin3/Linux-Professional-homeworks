@@ -1,0 +1,4 @@
+ip_to_route: ['0.0.0.0/0']
+gateway_def: '192.168.255.9'
+os_type: "ununtu"
+ansible_port: 2010

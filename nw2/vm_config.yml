@@ -8,6 +8,13 @@
     installed_soft: ['git','mc','iproute','tcpdump','net-tools']
 
   tasks:
+  - name: setting forwarding enable
+    ansible.posix.sysctl:
+      name: net.ipv4.conf.all.forwarding
+      value: '1'
+      state: present
+    when: (ansible_hostname == "inetrouter") or
+          (ansible_hostname == "centralrouter")
   - name: installing soft
     ansible.builtin.package:
       name:
@@ -18,23 +25,26 @@
     ansible.builtin.yum:
       name: net-tools
       state: present
-  - name: disable default route
+  - name: disable default route eth0
     ansible.builtin.lineinfile:
       dest: /etc/sysconfig/network-scripts/ifcfg-eth0
       line: DEFROUTE=no
-    when: (ansible_hostname == "centrarouter") or
+      state: present
+    when: (ansible_hostname == "centralrouter") or
           (ansible_hostname == "centralserver") or
           (ansible_hostname == "office1router")
-      #- name: set default route office1router
-      #ansible.builtin.lineinline:
-      #dest: /etc/sysconfig/network-scripts/ifcfg-eth1
-      #line: GATEWAY=192.168.255.9
-      #when: (ansible_hostname == "office1router")
+  - name: set defroute eth1
+    ansible.builtin.lineinfile:
+      dest: /etc/sysconfig/network-scripts/ifcfg-eth1
+      line: DEFROUTE=yes
+      state: present
+    when: (ansible_hostname == "centralrouter")
   - name: set default gateway centralrouter
     ansible.builtin.lineinfile:
       dest: /etc/sysconfig/network-scripts/ifcfg-eth1
-      line: GATEWAY=192.168.255.1
-    when: (ansible_hostname == "centrarouter")
+      line: GATEWAY={{ gateway_def }}
+      state: present
+    when: (ansible_hostname == "centralrouter")
   #--------------------------------------------#
   - name: patching routes inetrouter
     ansible.builtin.template:
@@ -69,7 +79,7 @@
   become: true
   vars:
     test_version: 1
-  tasks:
-  - name: printfacts
-    ansible.builtin.debug:
-      msg: "{{ ansible_default_ipv4['macaddress'] }}"
+      #  tasks:
+      #- name: printfacts
+      #ansible.builtin.debug:
+      #msg: "{{ ansible_default_ipv4['macaddress'] }}"

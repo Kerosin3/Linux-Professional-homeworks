@@ -5,11 +5,14 @@ all:
     routers:
       hosts:
         centralrouter:
+        office1router:
+        office2router:
     servers:
       hosts:
         centalserver:
   vars:
     ansible_user: vagrant
     ansible_host: 127.0.0.1
+    ansible_ssh_password: "vagrant"
     test_var: 'hahaha'
     ansible_ssh_private_key: '~/.ssh/id_rsa' 
