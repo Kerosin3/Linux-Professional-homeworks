@@ -8,13 +8,20 @@
     installed_soft: ['git','mc','iproute','tcpdump','net-tools']
 
   tasks:
-  - name: setting forwarding enable
+  - name: setting forwarding enable centos
     ansible.posix.sysctl:
       name: net.ipv4.conf.all.forwarding
       value: '1'
       state: present
     when: (ansible_hostname == "inetrouter") or
           (ansible_hostname == "centralrouter")
+  - name: setting forwarding enable ubuntu
+    ansible.posix.sysctl:
+      name: net.ipv4.ip_forward
+      value: '1'
+      state: present
+    when: (ansible_hostname == "office1router") or
+          (ansible_hostname == "office2router")
   - name: installing soft
     ansible.builtin.package:
       name:
@@ -31,8 +38,7 @@
       line: DEFROUTE=no
       state: present
     when: (ansible_hostname == "centralrouter") or
-          (ansible_hostname == "centralserver") or
-          (ansible_hostname == "office1router")
+          (ansible_hostname == "centralserver")
   - name: set defroute eth1
     ansible.builtin.lineinfile:
       dest: /etc/sysconfig/network-scripts/ifcfg-eth1
@@ -71,6 +77,10 @@
     - name: restart_send_mail
       service:
         name=sendmail
+        state=restarted
+    - name: restart_network_ubuntu
+      service:
+        name=systemd-networkd
         state=restarted
 
 - name: inet_routers

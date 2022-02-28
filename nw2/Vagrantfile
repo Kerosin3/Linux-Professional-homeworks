@@ -7,7 +7,7 @@ MACHINES = {
         #:public => {:ip => '10.10.10.1', :adapter => 1},
         :box_version => "2004.01",
         :hostname => "inetrouter",
-       # :ssh_port => 2001,
+        :ssh_port => 2001,
         :os_type => "centos",
         :ram => 1024,
         :cpu => 2,
@@ -20,7 +20,7 @@ MACHINES = {
         :box_version => "2004.01",
         :os_type => "centos",
         :hostname => "centralrouter",
-        #:ssh_port => 2020,
+        :ssh_port => 2002,
         :ram => 1024,
         :cpu => 2,
         :net => [
@@ -63,8 +63,9 @@ MACHINES = {
   },
 
   :office1router => {
-        :box_name => "ubuntu/trusty64",
-        :box_version => "20190514.0.0",
+        #:box_name => "ubuntu/trusty64",
+        :box_name => "ubuntu/focal64",
+        #:box_version => "20190514.0.0",
         :os_type => "ubuntu",
         :hostname => "office1router",
         :ssh_port => 2010,
@@ -79,9 +80,11 @@ MACHINES = {
                 ]
   },
 :office1server => {
-        :box_name => "ubuntu/trusty64",
-        :box_version => "20190514.0.0",
+        #:box_name => "ubuntu/trusty64",
+        #:box_version => "20190514.0.0",
+        :box_name => "ubuntu/focal64",
         :hostname => "office1server",
+        :ssh_port => 2011,
         :os_type => "ubuntu",
         :ram => 1024,
         :cpu => 2,
@@ -140,13 +143,13 @@ Vagrant.configure("2") do |config|
         when "ubuntu"
           box.vm.provision "shell", inline: <<-SHELL
                    apt update -y
-                   apt install net-tools -y
+                   apt install net-tools python-minimal sshpass -y
                    ssh-keygen -t rsa -N '' -f ~/.ssh/id_rsa <<< y
           SHELL
 
         box.vm.provision "file", source: "~/.ssh/id_rsa.pub", destination: "/home/vagrant/.ssh/id_rsa.pub"
         box.vm.provision :shell, :inline => "cat /home/vagrant/.ssh/id_rsa.pub >> /home/vagrant/.ssh/authorized_keys"
-        box.vm.provision :shell, :inline => "sudo sed -i 's/PasswordAuthentication yes/PasswordAuthentication no/g' /etc/ssh/sshd_config", run: "always"
+        box.vm.provision :shell, :inline => "sudo sed -i 's/PasswordAuthentication no/PasswordAuthentication yes/g' /etc/ssh/sshd_config", run: "always"
 
         box.vm.provision :shell, :inline => "service ssh restart"
          end
@@ -198,6 +201,8 @@ Vagrant.configure("2") do |config|
             SHELL
         when "office1router"
           box.vm.provision "shell", run: "always", inline: <<-SHELL
+
+            ip route add 192.168.255.8/30 via 192.168.255.9
             #sysctl net.ipv4.conf.all.forwarding=1
             SHELL
         when "office1server"
