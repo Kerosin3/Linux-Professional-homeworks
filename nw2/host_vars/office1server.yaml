@@ -1,4 +1,5 @@
 ip_to_route: ['0.0.0.0/0']
 gateway_def: '192.168.2.129'
-os_type: "ununtu"
+os_type: "ubuntu"
 ansible_port: 2011
+def_ip: "192.168.2.130/26"

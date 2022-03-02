@@ -38,7 +38,7 @@ MACHINES = {
         :box_version => "2004.01",
         :os_type => "centos",
         :hostname => "centralserver",
-        #:ssh_port => 2021,
+        :ssh_port => 2003,
         :ram => 1024,
         :cpu => 2,
         :net => [
@@ -48,10 +48,10 @@ MACHINES = {
                 ]
   },
   :office2router => {
-        :box_name => "centos/7",
-        :box_version => "2004.01",
+        :box_name => "ubuntu/focal64",
         :hostname => "office2router",
         :os_type => "ubuntu",
+        :ssh_port => 2012,
         :ram => 1024,
         :cpu => 2,
         :net => [
@@ -92,6 +92,20 @@ MACHINES = {
                    {ip: '192.168.2.130', adapter: 2, netmask: "255.255.255.192", virtualbox__intnet: "managers1"},
                 ]
   },
+ :office2server => {
+        #:box_name => "ubuntu/trusty64",
+        #:box_version => "20190514.0.0",
+        :box_name => "debian/buster64",
+        :hostname => "office2server",
+        :ssh_port => 2013,
+        :os_type => "debian",
+        :ram => 1024,
+        :cpu => 2,
+        :net => [
+                   {ip: '192.168.1.2', adapter: 2, netmask: "255.255.255.128", virtualbox__intnet: "managers1"},
+                ]
+  },
+
 
 
 }
@@ -147,6 +161,14 @@ Vagrant.configure("2") do |config|
                    ssh-keygen -t rsa -N '' -f ~/.ssh/id_rsa <<< y
           SHELL
 
+        when "debian"
+          box.vm.provision "shell", inline: <<-SHELL
+                   apt update -y
+                   apt install net-tools python-minimal sshpass -y
+                   ssh-keygen -t rsa -N '' -f ~/.ssh/id_rsa <<< y
+          SHELL
+
+
         box.vm.provision "file", source: "~/.ssh/id_rsa.pub", destination: "/home/vagrant/.ssh/id_rsa.pub"
         box.vm.provision :shell, :inline => "cat /home/vagrant/.ssh/id_rsa.pub >> /home/vagrant/.ssh/authorized_keys"
         box.vm.provision :shell, :inline => "sudo sed -i 's/PasswordAuthentication no/PasswordAuthentication yes/g' /etc/ssh/sshd_config", run: "always"
@@ -184,25 +206,20 @@ Vagrant.configure("2") do |config|
             SHELL
         when "centralserver"
           box.vm.provision "shell", run: "always", inline: <<-SHELL
-            echo "DEFROUTE=no" >> /etc/sysconfig/network-scripts/ifcfg-eth0 
-            echo "GATEWAY=192.168.0.1" >> /etc/sysconfig/network-scripts/ifcfg-eth1
-            ip r del default
-            ip route add 0.0.0.0/0 via 192.168.0.1 # all!
-            systemctl restart network
+            #echo "DEFROUTE=no" >> /etc/sysconfig/network-scripts/ifcfg-eth0 
+            #echo "GATEWAY=192.168.0.1" >> /etc/sysconfig/network-scripts/ifcfg-eth1
+            #ip r del default
+            #ip route add 0.0.0.0/0 via 192.168.0.1 # all!
+            #systemctl restart network
             SHELL
         when "office2router"
           box.vm.provision "shell", run: "always", inline: <<-SHELL
-            sysctl net.ipv4.conf.all.forwarding=1
-            echo "DEFROUTE=no" >> /etc/sysconfig/network-scripts/ifcfg-eth0 
-            echo "GATEWAY=192.168.255.5" >> /etc/sysconfig/network-scripts/ifcfg-eth1
-            ip r del default
-            ip route add 0.0.0.0/0 via 192.168.255.5
-            systemctl restart network
+            #systemctl restart network
             SHELL
         when "office1router"
           box.vm.provision "shell", run: "always", inline: <<-SHELL
 
-            ip route add 192.168.255.8/30 via 192.168.255.9
+            #ip route add 192.168.255.8/30 via 192.168.255.9
             #sysctl net.ipv4.conf.all.forwarding=1
             SHELL
         when "office1server"

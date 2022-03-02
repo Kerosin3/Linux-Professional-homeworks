@@ -2,6 +2,7 @@
 auto enp0s8
 
 iface enp0s8 inet static
-address 192.168.255.10
+address {{ ip_only }}
 netmask 255.255.255.252
 gateway {{ gateway_def }}
+up route add -net {{ server_network_address }} netmask 255.255.255.192 gw {{ gateway_def }}
