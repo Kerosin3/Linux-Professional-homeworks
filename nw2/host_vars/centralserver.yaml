@@ -1,4 +1,7 @@
 ip_to_route: ['0.0.0.0/0']
 gateway_def: '192.168.0.1'
+def_ip: "192.168.0.2/28"
+ip_only: "192.168.0.2"
 ansible_port: 2003
 os_type: "centos"
+server_network_address: "192.168.0.0"

@@ -5,8 +5,9 @@
   become: true
   vars:
     test_version: 1
-    installed_soft: ['git','mc','iproute','tcpdump','net-tools']
-    installed_soft_ubuntu: ['git','mc','tcpdump','net-tools']
+    installed_soft: ['git','mc','iproute','tcpdump','net-tools','traceroute']
+    installed_soft_ubuntu: ['git','mc','tcpdump','net-tools','traceroute']
+    desired_interface_name: ""
 
   tasks:
   - name: setting forwarding enable centos
@@ -15,7 +16,8 @@
       value: '1'
       state: present
     when: (ansible_hostname == "inetrouter") or
-          (ansible_hostname == "centralrouter")
+          (ansible_hostname == "centralrouter") or
+          (ansible_hostname == "centralserver")
   - name: setting forwarding enable ubuntu
     ansible.posix.sysctl:
       name: net.ipv4.ip_forward
@@ -23,7 +25,17 @@
       state: present
     when: (ansible_hostname == "office1router") or
           (ansible_hostname == "office2router") or
-          (ansible_hostname == "centralserver")
+          (ansible_hostname == "office1server")
+  - name: parse default interfaces
+    set_fact:
+      desired_interface_name="{{ item }}"
+    when: hostvars[inventory_hostname]['ansible_{{item}}']['ipv4']['address'] == "{{ ip_only }}"
+    with_items:
+      - "{{ ansible_interfaces }}"
+  - name: print default interface
+    debug:
+      var: desired_interface_name
+
   - name: installing soft centos
     ansible.builtin.package:
       name:
@@ -37,7 +49,7 @@
         - "{{ item }}"
       state: present
     loop: "{{ installed_soft_ubuntu  }}"
-    when: (os_type == "ubuntu") 
+    when: (os_type == "ubuntu") or (os_type == "debian")
   - name: disable default route eth0
     ansible.builtin.lineinfile:
       dest: /etc/sysconfig/network-scripts/ifcfg-eth0
@@ -67,7 +79,9 @@
       dest: /etc/network/interfaces
       mode: 744
     when: (ansible_hostname == "office1router") or
-          (ansible_hostname == "office2router")
+          (ansible_hostname == "office2router") or
+          (ansible_hostname == "office1server")
+
   - name: insert route office1router
     ansible.builtin.blockinfile:
       dest: /etc/netplan/50-vagrant.yaml
@@ -75,18 +89,10 @@
       block: |6
                   routes:
                     - to: 0.0.0.0/0
-                      via: 192.168.255.9
-    when: (ansible_hostname == "office1router")
-    notify: restart_network_ubuntu
-  - name: insert route office1router
-    ansible.builtin.blockinfile:
-      dest: /etc/netplan/50-vagrant.yaml
-      insertafter: "{{ def_ip }}"
-      block: |6
-                  routes:
-                    - to: 0.0.0.0/0
-                      via: 192.168.255.5
-    when: (ansible_hostname == "office2router")
+                      via: {{ gateway_def }}
+    when: (ansible_hostname == "office1router") or
+          (ansible_hostname == "office2router") or
+          (ansible_hostname == "office1server")
     notify: restart_network_ubuntu
   - name: patching routes inetrouter
     ansible.builtin.template:
@@ -97,7 +103,8 @@
     notify: restart_network
   - name: restarting network inetrouter
     ansible.builtin.command: systemctl restart network
-    when: (ansible_hostname == "inetrouter")
+    when: (ansible_hostname == "inetrouter") or
+          (ansible_hostname == "centralserver")
   - name: patching routes centralrouter
     ansible.builtin.template:
       src: ./settings/route_template_centos.j2
@@ -115,7 +122,8 @@
   - name: apply netplan
     ansible.builtin.command: netplan apply
     when: (ansible_hostname == "office1router") or
-          (ansible_hostname == "office2router")
+          (ansible_hostname == "office2router") or
+          (ansible_hostname == "office1server")
     notify: restart_network_ubuntu
 
   handlers:

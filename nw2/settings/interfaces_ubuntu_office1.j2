@@ -1,7 +1,7 @@
-# The primary network interface
-auto enp0s8
+# The primary network interface {{ ansible_facts['hostname'] }}
+auto {{ desired_interface_name }}
 
-iface enp0s8 inet static
+iface {{ desired_interface_name }} inet static
 address {{ ip_only }}
 netmask 255.255.255.252
 gateway {{ gateway_def }}

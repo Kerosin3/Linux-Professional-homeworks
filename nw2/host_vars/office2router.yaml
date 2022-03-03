@@ -1,6 +1,6 @@
 ip_to_route: ['0.0.0.0/0']
 gateway_def: '192.168.255.5'
-os_type: "ubuntu"
+os_type: "debian"
 ansible_port: 2012
 def_ip: "192.168.255.6/30"
 ip_only: "192.168.255.6"

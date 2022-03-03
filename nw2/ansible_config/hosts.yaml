@@ -9,7 +9,9 @@ all:
         office2router:
     servers:
       hosts:
-        centalserver:
+        centralserver:
+        office1server:
+        office2server:
   vars:
     ansible_user: vagrant
     ansible_host: 127.0.0.1
