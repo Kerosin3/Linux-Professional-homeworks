@@ -5,4 +5,4 @@ iface {{ desired_interface_name }} inet static
 address {{ ip_only }}
 netmask 255.255.255.252
 gateway {{ gateway_def }}
-up route add -net {{ server_network_address }} netmask 255.255.255.192 gw {{ gateway_def }}
+up route add -net {{ server_network_address }} netmask {{ server_network_netmask }} gw {{ gateway_def }}

@@ -5,3 +5,5 @@ ansible_port: 2012
 def_ip: "192.168.255.6/30"
 ip_only: "192.168.255.6"
 server_network_address: "192.168.1.0"
+server_network_netmask: "255.255.255.126"
+

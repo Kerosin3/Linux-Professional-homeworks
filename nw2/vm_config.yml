@@ -18,7 +18,7 @@
     when: (ansible_hostname == "inetrouter") or
           (ansible_hostname == "centralrouter") or
           (ansible_hostname == "centralserver")
-  - name: setting forwarding enable ubuntu
+  - name: setting forwarding enable ubuntu & debian
     ansible.posix.sysctl:
       name: net.ipv4.ip_forward
       value: '1'
@@ -43,7 +43,7 @@
       state: present
     loop: "{{ installed_soft  }}"
     when: (os_type == "centos")
-  - name: installing soft ubuntu
+  - name: installing soft ubuntu&debian
     ansible.builtin.package:
       name:
         - "{{ item }}"
@@ -79,9 +79,13 @@
       dest: /etc/network/interfaces
       mode: 744
     when: (ansible_hostname == "office1router") or
-          (ansible_hostname == "office2router") or
           (ansible_hostname == "office1server")
-
+  - name: patching gaweway debian office2
+    ansible.builtin.template:
+      src: ./settings/interfaces_debian_office2.j2
+      dest: /etc/network/interfaces
+      mode: 744
+    when: (ansible_hostname == "office2router") 
   - name: insert route office1router
     ansible.builtin.blockinfile:
       dest: /etc/netplan/50-vagrant.yaml
@@ -91,9 +95,9 @@
                     - to: 0.0.0.0/0
                       via: {{ gateway_def }}
     when: (ansible_hostname == "office1router") or
-          (ansible_hostname == "office2router") or
           (ansible_hostname == "office1server")
     notify: restart_network_ubuntu
+
   - name: patching routes inetrouter
     ansible.builtin.template:
       src: ./settings/route_template_centos.j2
@@ -112,17 +116,16 @@
       mode: 744
     when: (ansible_hostname == "centralrouter")
     notify: restart_network
-  - name: ubuntu routing office1
-    ansible.builtin.template:
-      src: ./settings/interfaces_ubuntu_office1.j2
-      dest: /etc/network/interfaces
-      mode: 744
-    when: (ansible_hostname == "office1router") or
-          (ansible_hostname == "office2router")
+      #- name: ubuntu routing office1
+      #ansible.builtin.template:
+      #src: ./settings/interfaces_ubuntu_office1.j2
+      #dest: /etc/network/interfaces
+      #mode: 744
+      #when: (ansible_hostname == "office1router") or
+      #    (ansible_hostname == "office2router")
   - name: apply netplan
     ansible.builtin.command: netplan apply
     when: (ansible_hostname == "office1router") or
-          (ansible_hostname == "office2router") or
           (ansible_hostname == "office1server")
     notify: restart_network_ubuntu
 
@@ -139,6 +142,11 @@
       service:
         name=systemd-networkd
         state=restarted
+    - name: restart_network_debian
+      service:
+        name=networking
+        state=restarted
+
 
 - name: inet_routers
   hosts: centralrouter  
