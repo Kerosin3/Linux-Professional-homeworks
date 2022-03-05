@@ -1,0 +1,8 @@
+ip_to_route: ['0.0.0.0/0']
+gateway_def: '192.168.1.1'
+os_type: "debian"
+ansible_port: 2013
+def_ip: "192.168.1.2/25"
+ip_only: "192.168.1.2"
+server_network_address: "192.168.1.0"
+server_network_netmask: "255.255.255.128"

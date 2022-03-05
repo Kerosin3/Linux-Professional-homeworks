@@ -25,7 +25,8 @@
       state: present
     when: (ansible_hostname == "office1router") or
           (ansible_hostname == "office2router") or
-          (ansible_hostname == "office1server")
+          (ansible_hostname == "office1server") or
+          (ansible_hostname == "office2server")
   - name: parse default interfaces
     set_fact:
       desired_interface_name="{{ item }}"
@@ -85,7 +86,8 @@
       src: ./settings/interfaces_debian_office2.j2
       dest: /etc/network/interfaces
       mode: 744
-    when: (ansible_hostname == "office2router") 
+    when: (ansible_hostname == "office2router") or
+          (ansible_hostname == "office2server")
   - name: insert route office1router
     ansible.builtin.blockinfile:
       dest: /etc/netplan/50-vagrant.yaml
