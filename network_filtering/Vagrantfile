@@ -1,0 +1,87 @@
+# -*- mode: ruby -*-
+# vim: set ft=ruby :
+
+MACHINES = {
+:centos7machine1 => {
+        :box_name => "centos/7",
+        :box_version => "2004.01",
+        :hostname => "centos7machine1",
+        :ssh_port => 2050,
+        :ram => 1024,
+        :cpu => 2,
+        :net => [
+                   {ip: '192.168.0.1', adapter: 2, netmask: "255.255.255.252", virtualbox__intnet: "test-net"},
+                ]
+  },
+ :centos7machine2 => {
+        :box_name => "centos/7",
+        :box_version => "2004.01",
+        :hostname => "centos1machine2",
+        :ssh_port => 2051,
+        :ram => 1024,
+        :cpu => 2,
+        :net => [
+                   {ip: '192.168.0.2', adapter: 2, netmask: "255.255.255.252", virtualbox__intnet: "test-net"},
+                ]
+  },
+  
+}
+
+Vagrant.configure("2") do |config|
+
+  MACHINES.each do |boxname, boxconfig|
+
+    config.vm.define boxname do |box|
+
+        box.vm.box = boxconfig[:box_name]
+        box.vm.box_version = boxconfig[:box_version]
+        box.vm.hostname = boxconfig[:hostname]
+        box.vbguest.auto_update = false
+        box.ssh.keys_only = true
+        box.ssh.insert_key = true
+        box.vm.network :forwarded_port,host:boxconfig[:ssh_port], guest:22,id:'ssh'
+        box.vm.provider "virtualbox" do |vb_machine_settings|
+                vb_machine_settings.customize ["modifyvm", :id, "--memory", boxconfig[:ram]]
+                vb_machine_settings.customize ["modifyvm", :id, "--cpus", boxconfig[:cpu]]
+            end
+
+        boxconfig[:net].each do |ipconf|
+          box.vm.network "private_network", ipconf
+        end
+        
+        if boxconfig.key?(:public)
+          box.vm.network "public_network", boxconfig[:public]
+        end
+
+#               
+        
+        box.vm.provision "file", source: "~/.ssh/id_rsa.pub", destination: "/home/vagrant/.ssh/id_rsa.pub"
+        box.vm.provision :shell, :inline => "cat /home/vagrant/.ssh/id_rsa.pub >> /home/vagrant/.ssh/authorized_keys"
+        box.vm.provision :shell, :inline => "systemctl enable sshd"
+        box.vm.provision :shell, :inline => "systemctl start sshd"
+        box.vm.provision "shell", inline: <<-SHELL
+                mkdir -p ~root/.ssh
+                cp ~vagrant/.ssh/auth* ~root/.ssh
+        SHELL
+        
+        box.vm.provision "shell", inline: <<-SHELL
+                 yum update
+                 yum install epel-release centos-release-scl -y
+        SHELL
+
+
+        box.vm.provision "ansible", run: "always" do |ansible|
+          ansible.playbook = "vm_config.yml"
+  
+        end
+        
+
+       end
+
+        
+
+      end
+
+  end
+  
+  

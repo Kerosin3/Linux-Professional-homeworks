@@ -1,5 +1,5 @@
 ---
-- name: routers_soft
+- name: main_playbook
   hosts: all 
   gather_facts: true
   become: true
@@ -30,14 +30,3 @@
       service:
         name=sendmail
         state=restarted
-
-- name: inet_routers
-  hosts: centralrouter  
-  gather_facts: true
-  become: true
-  vars:
-    test_version: 1
-  tasks:
-  - name: printfacts
-    ansible.builtin.debug:
-      msg: "{{ ansible_default_ipv4['macaddress'] }}"
