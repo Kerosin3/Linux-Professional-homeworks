@@ -1,3 +1,7 @@
-192.168.1.0/25 via 192.168.255.6
+{% for item in subnets_office1 %}
+{{ item }} via 192.168.255.6
+{% endfor %}
+
+
 
 ##{{ hostvars[inventory_hostname] }}
