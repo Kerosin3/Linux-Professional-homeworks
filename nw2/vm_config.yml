@@ -6,7 +6,7 @@
   vars:
     test_version: 1
     installed_soft: ['git','mc','iproute','tcpdump','net-tools','traceroute']
-    installed_soft_ubuntu: ['git','mc','tcpdump','net-tools','traceroute']
+    installed_soft_ubuntu: ['git','mc','tcpdump','net-tools','traceroute','iptables-persistent']
     desired_interface_name: ""
 
   tasks:
@@ -113,8 +113,21 @@
           (ansible_hostname == "centralserver")
   - name: patching routes centralrouter
     ansible.builtin.template:
-      src: ./settings/route_template_centos.j2
+      src: ./settings/route_template_centos_central.j2
       dest: /etc/sysconfig/network-scripts/route-eth1
+      mode: 744
+    when: (ansible_hostname == "centralrouter")
+  - name: patching routes centralrouter additional office2
+    ansible.builtin.template:
+      src: ./settings/route_template_office2.j2
+      dest: /etc/sysconfig/network-scripts/route-eth5
+      mode: 744
+    when: (ansible_hostname == "centralrouter")
+    notify: restart_network
+  - name: patching routes centralrouter additional office1
+    ansible.builtin.template:
+      src: ./settings/route_template_office1.j2
+      dest: /etc/sysconfig/network-scripts/route-eth6
       mode: 744
     when: (ansible_hostname == "centralrouter")
     notify: restart_network
@@ -130,7 +143,19 @@
     when: (ansible_hostname == "office1router") or
           (ansible_hostname == "office1server")
     notify: restart_network_ubuntu
-
+  - name: applying masquarade to routers
+    ansible.builtin.command: iptables -t nat -A POSTROUTING -s 192.168.0.0/16 -o "{{ desired_interface_name }}" -j SNAT --to-source "{{ ip_only }}"
+    when: (ansible_hostname == "office1router") or
+          (ansible_hostname == "office2router")
+  - name: enabling peristent service
+    ansible.builtin.command: systemctl enable netfilter-persistent.service
+    when: (ansible_hostname == "office1router") or
+          (ansible_hostname == "office2router")
+  - name: saving iptables settings
+    ansible.builtin.command: /etc/init.d/netfilter-persistent save
+    when: (ansible_hostname == "office1router") or
+          (ansible_hostname == "office2router")
+    run_once: true
   handlers:
     - name: restart_network
       service:

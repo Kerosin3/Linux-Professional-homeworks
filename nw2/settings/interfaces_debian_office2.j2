@@ -11,3 +11,4 @@ iface {{ desired_interface_name }} inet static
       gateway {{ gateway_def }}
 #default route
 up ip route add 0.0.0.0/0 via {{ gateway_def }}
+sudo post-up /sbin/iptables -t nat -A POSTROUTING -s 192.168.0.0/16 -j SNAT --to-source {{ ip_only }}

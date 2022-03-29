@@ -1,0 +1,7 @@
+{% for item in ip_to_route %}
+{{ item }} via {{ gateway_def }}
+{% endfor %}
+##192.168.1.0/25 via 192.168.255.6
+##192.168.2.128/26 via 192.168.255.10
+
+##{{ hostvars[inventory_hostname] }}
