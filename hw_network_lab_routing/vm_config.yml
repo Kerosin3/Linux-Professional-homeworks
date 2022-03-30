@@ -8,6 +8,7 @@
     installed_soft: ['git','mc','iproute','tcpdump','net-tools','traceroute']
     installed_soft_ubuntu: ['git','mc','tcpdump','net-tools','traceroute','iptables-persistent']
     desired_interface_name: ""
+    enable_masquarading_offices: False #enable masquarading on offices
 
   tasks:
   - name: setting forwarding enable centos
@@ -145,16 +146,18 @@
     notify: restart_network_ubuntu
   - name: applying masquarade to routers
     ansible.builtin.command: iptables -t nat -A POSTROUTING -s 192.168.0.0/16 -o "{{ desired_interface_name }}" -j SNAT --to-source "{{ ip_only }}"
-    when: (ansible_hostname == "office1router") or
-          (ansible_hostname == "office2router")
+    when: ((ansible_hostname == "office1router") or
+          (ansible_hostname == "office2router")) and (enable_masquarading_offices)
+    run_once: true
   - name: enabling peristent service
     ansible.builtin.command: systemctl enable netfilter-persistent.service
-    when: (ansible_hostname == "office1router") or
-          (ansible_hostname == "office2router")
+    when: ((ansible_hostname == "office1router") or
+          (ansible_hostname == "office2router")) and (enable_masquarading_offices)
+    run_once: true
   - name: saving iptables settings
     ansible.builtin.command: /etc/init.d/netfilter-persistent save
-    when: (ansible_hostname == "office1router") or
-          (ansible_hostname == "office2router")
+    when: ((ansible_hostname == "office1router") or
+          (ansible_hostname == "office2router")) and (enable_masquarading_offices)
     run_once: true
   handlers:
     - name: restart_network
