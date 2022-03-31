@@ -28,7 +28,27 @@
       dest: /root/.bashrc
       line: 'export PAGER="most"'
     run_once: true
-
+  - name: Allow related and established connections
+    ansible.builtin.iptables:
+      chain: INPUT
+      match: conntrack
+      ctstate: ESTABLISHED,RELATED
+      jump: ACCEPT
+    become: yes
+  - name: open ssh
+    ansible.builtin.iptables:
+      chain: INPUT
+      protocol: tcp
+      ctstate: NEW
+      match: conntrack
+      destination_port: 22
+      jump: ACCEPT
+      comment: allow ssh
+    become: yes
+  - name: Set the policy for the INPUT chain to DROP
+    ansible.builtin.iptables:
+      chain: INPUT
+      policy: DROP
   handlers:
     - name: restart_crond
       service:
