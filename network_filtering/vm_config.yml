@@ -5,7 +5,7 @@
   become: true
   vars:
     test_version: 1
-    installed_soft: ['git','mc','iproute','tcpdump','net-tools','nmap']
+    installed_soft: ['git','mc','iproute','tcpdump','net-tools','nmap','nftables','bash-completion','bash-completion-extras','most']
 
   tasks:
   - name: installing soft
@@ -18,8 +18,16 @@
     ansible.builtin.yum:
       name: net-tools
       state: present
-        #    when: ansible_hostname == 'centralrouter'
-
+  - name: append pager vagrant
+    ansible.builtin.lineinfile:
+      dest: /home/vagrant/.bashrc
+      line: 'export PAGER="most"'
+    run_once: true
+  - name: append pager root
+    ansible.builtin.lineinfile:
+      dest: /root/.bashrc
+      line: 'export PAGER="most"'
+    run_once: true
 
   handlers:
     - name: restart_crond
