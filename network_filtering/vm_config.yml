@@ -5,7 +5,7 @@
   become: true
   vars:
     test_version: 1
-    installed_soft: ['git','mc','iproute','tcpdump','net-tools']
+    installed_soft: ['git','mc','iproute','tcpdump','net-tools','nmap']
 
   tasks:
   - name: installing soft
