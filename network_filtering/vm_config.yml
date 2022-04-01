@@ -5,7 +5,9 @@
   become: true
   vars:
     test_version: 1
-    installed_soft: ['git','mc','iproute','tcpdump','net-tools','nmap','nftables','bash-completion','bash-completion-extras','most']
+    installed_soft: ['git','mc','iproute','tcpdump','net-tools','nmap','nftables','bash-completion','bash-completion-extras','most','zsh']
+    host1_ip: "192.168.0.1"
+    host2_ip: "192.168.0.2"
 
   tasks:
   - name: installing soft
@@ -45,10 +47,79 @@
       jump: ACCEPT
       comment: allow ssh
     become: yes
+  - name: enable loopback
+    ansible.builtin.iptables:
+      chain: INPUT
+      in_interface: lo
+      jump: ACCEPT
+      comment: enable loopback
+    become: yes
+  - name: Allow related connections host1
+    ansible.builtin.iptables:
+      chain: INPUT
+      action: insert
+      source: "{{ host2_ip }}"
+      jump: ACCEPT
+    become: yes
+    when: (ansible_hostname == "centos7machine1")
+    run_once: true
+  - name: Allow related connections host1
+    ansible.builtin.iptables:
+      chain: INPUT
+      action: insert
+      source: "{{ host1_ip }}"
+      jump: ACCEPT
+    become: yes
+    when: (ansible_hostname == "centos7machine2")
+    run_once: true
   - name: Set the policy for the INPUT chain to DROP
     ansible.builtin.iptables:
       chain: INPUT
       policy: DROP
+  - name: copy git zsh
+    ansible.builtin.git:
+      repo: https://github.com/blackden/zshrc.git
+      dest: /root/zshrc
+    run_once: true
+  - name: Copy file with owner and permissions
+    ansible.builtin.copy:
+      src: "{{ item.0 }}"
+      dest: "{{ item.1 }}"
+      remote_src: yes
+      owner: root
+      group: root
+      mode: '0744'
+    with_together:
+      - ['/root/zshrc/zshrc','/root/zshrc/zshrc.pre']
+      - ['/root/.zshrc','/root/.zshrc.pre']
+    run_once: true
+  - name: copy zsh settings
+    ansible.builtin.copy:
+      src: "{{ item }}"
+      dest: "/home/vagrant/"
+      owner: root
+      remote_src: yes
+      group: vagrant
+      mode: '0764'
+    loop:
+      - /root/.zshrc
+      - /root/.zshrc.pre
+    run_once: true
+  - name: change shell for root
+    ansible.builtin.shell: usermod -s /bin/zsh root
+    run_once: true
+  - name: change shell for user
+    ansible.builtin.shell: usermod -s /usr/bin/zsh vagrant
+    run_once: true
+  - name: fix ssh settings
+    ansible.builtin.lineinfile:
+      path: "/etc/ssh/sshd_config"
+      regex: "^PasswordAuthentication no"
+      line: "PasswordAuthentication yes"
+      insertafter: EOF
+      state: present
+    notify: restart_sshd
+    run_once: true
   handlers:
     - name: restart_crond
       service:
@@ -57,4 +128,8 @@
     - name: restart_send_mail
       service:
         name=sendmail
+        state=restarted
+    - name: restart_sshd
+      service:
+        name=sshd
         state=restarted
