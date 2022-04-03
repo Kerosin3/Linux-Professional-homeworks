@@ -6,6 +6,7 @@ all:
       hosts:
         centos8machine1:
         centos8machine2:
+        centos8machine3:
   vars:
     ansible_user: vagrant
     ansible_host: 127.0.0.1

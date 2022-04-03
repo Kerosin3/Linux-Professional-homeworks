@@ -120,6 +120,13 @@
       state: present
     notify: restart_sshd
     run_once: true
+  - name: setting forwarding enable centos
+    ansible.posix.sysctl:
+      name: net.ipv4.conf.all.forwarding
+      value: '1'
+      state: present
+    when: (ansible_hostname == "centos7machine2")
+    
   handlers:
     - name: restart_crond
       service:
@@ -133,3 +140,4 @@
       service:
         name=sshd
         state=restarted
+
