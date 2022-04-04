@@ -19,12 +19,13 @@ MACHINES = {
         :hostname => "centos7machine2",
         :ssh_port => 2051,
         :port_nginx => 8082,
-        :port_nginx_server => 80,
+        :port_nginx_server => 90,
         :ram => 1024,
         :cpu => 2,
         :net => [
                    {ip: '192.168.0.2', adapter: 2, netmask: "255.255.255.252", virtualbox__intnet: "test-net"},
-                   {ip: '192.168.1.101', adapter: 3, netmask: "255.255.255.252", virtualbox__intnet: "net_conn1"},
+                   {ip: '192.168.2.101', adapter: 3, netmask: "255.255.255.252", virtualbox__intnet: "net_conn1"},
+                   {ip: '192.168.1.101', adapter: 4, netmask: "255.255.255.252", virtualbox__intnet: "net_conn2"},
                 ]
   },
   :centos7machine3 => {
@@ -38,7 +39,7 @@ MACHINES = {
         :port_nginx_server => 80,
         :net => [
                    #{ip: '192.168.0.2', adapter: 2, netmask: "255.255.255.252", virtualbox__intnet: "test-net"},
-                   {ip: '192.168.1.102', adapter: 3, netmask: "255.255.255.252", virtualbox__intnet: "net_conn1"},
+                   {ip: '192.168.2.102', adapter: 2, netmask: "255.255.255.252", virtualbox__intnet: "net_conn1"},
                 ]
   },
   
