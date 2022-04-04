@@ -35,7 +35,7 @@ MACHINES = {
         :ram => 1024,
         :cpu => 2,
         :port_nginx_3 => 8085,
-        :port_nginx_server => 90,
+        :port_nginx_server => 80,
         :net => [
                    #{ip: '192.168.0.2', adapter: 2, netmask: "255.255.255.252", virtualbox__intnet: "test-net"},
                    {ip: '192.168.1.102', adapter: 3, netmask: "255.255.255.252", virtualbox__intnet: "net_conn1"},
@@ -98,9 +98,9 @@ Vagrant.configure("2") do |config|
             ansible.playbook = "vm_config.yml"
           end
          when "centos7machine3" 
-            box.vm.network :forwarded_port,host:boxconfig[:port_nginx_3], guest:boxconfig[:port_nginx_server]
+#            box.vm.network :forwarded_port,host:boxconfig[:port_nginx_3], guest:boxconfig[:port_nginx_server]
             box.vm.provision "ansible", run: "always" do |ansible|
-            ansible.playbook = "vm_config_machine3.yml"
+            ansible.playbook = "vm_config_machine3_1.yml"
           end
         end
         

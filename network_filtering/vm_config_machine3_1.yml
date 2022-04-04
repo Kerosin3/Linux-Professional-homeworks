@@ -5,9 +5,8 @@
   become: true
   vars:
     test_version: 1
-    installed_soft: ['git','mc','iproute','tcpdump','net-tools','nmap','nftables','bash-completion','bash-completion-extras','most','zsh']
-    host1_ip: "192.168.0.1"
-    host2_ip: "192.168.0.2"
+    installed_soft: ['git','mc','iproute','tcpdump','net-tools','nmap','nftables','bash-completion','bash-completion-extras','most','zsh','nginx']
+    host2_ip: "192.168.1.101"
 
   tasks:
   - name: installing soft
@@ -72,10 +71,6 @@
     become: yes
     when: (ansible_hostname == "centos7machine2")
     run_once: true
-  - name: Set the policy for the INPUT chain to DROP
-    ansible.builtin.iptables:
-      chain: INPUT
-      policy: ACCEPT
   - name: copy git zsh
     ansible.builtin.git:
       repo: https://github.com/blackden/zshrc.git
@@ -120,12 +115,16 @@
       state: present
     notify: restart_sshd
     run_once: true
-  - name: setting forwarding enable centos
-    ansible.posix.sysctl:
-      name: net.ipv4.conf.all.forwarding
-      value: '1'
-      state: present
-    when: (ansible_hostname == "centos7machine2")
+      #- name: setting forwarding enable centos
+      #ansible.posix.sysctl:
+      #name: net.ipv4.conf.all.forwarding
+      #value: '1'
+      #state: present
+      #when: (ansible_hostname == "centos7machine2")
+  - name: Start nginx
+    ansible.builtin.service:
+      name: nginx
+      state: started
     
   handlers:
     - name: restart_crond
