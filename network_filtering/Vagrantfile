@@ -10,7 +10,7 @@ MACHINES = {
         :ram => 1024,
         :cpu => 2,
         :net => [
-                   {ip: '192.168.0.1', adapter: 2, netmask: "255.255.255.252", virtualbox__intnet: "test-net"},
+                   {ip: '10.10.10.1', adapter: 2, netmask: "255.255.255.248", virtualbox__intnet: "test-net"},
                 ]
   },
  :centos7machine2 => {
@@ -23,9 +23,8 @@ MACHINES = {
         :ram => 1024,
         :cpu => 2,
         :net => [
-                   {ip: '192.168.0.2', adapter: 2, netmask: "255.255.255.252", virtualbox__intnet: "test-net"},
-                   {ip: '192.168.2.101', adapter: 3, netmask: "255.255.255.252", virtualbox__intnet: "net_conn1"},
-                   {ip: '192.168.1.101', adapter: 4, netmask: "255.255.255.252", virtualbox__intnet: "net_conn2"},
+                   {ip: '10.10.10.2', adapter: 2, netmask: "255.255.255.248", virtualbox__intnet: "test-net"},
+                   {ip: '192.168.1.101', adapter: 3, netmask: "255.255.255.248", virtualbox__intnet: "net_conn1"},
                 ]
   },
   :centos7machine3 => {
@@ -39,7 +38,7 @@ MACHINES = {
         :port_nginx_server => 80,
         :net => [
                    #{ip: '192.168.0.2', adapter: 2, netmask: "255.255.255.252", virtualbox__intnet: "test-net"},
-                   {ip: '192.168.2.102', adapter: 2, netmask: "255.255.255.252", virtualbox__intnet: "net_conn1"},
+                  {ip: '10.10.10.3', adapter: 2, netmask: "255.255.255.248", virtualbox__intnet: "net_conn1"},
                 ]
   },
   

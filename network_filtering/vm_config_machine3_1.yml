@@ -7,6 +7,12 @@
     test_version: 1
     installed_soft: ['git','mc','iproute','tcpdump','net-tools','nmap','nftables','bash-completion','bash-completion-extras','most','zsh','nginx']
     host2_ip: "192.168.1.101"
+    os_env:
+      - key: EDITOR
+        value: vi
+      - key: TERM
+        value: xterm
+
 
   tasks:
   - name: installing soft
@@ -125,7 +131,14 @@
     ansible.builtin.service:
       name: nginx
       state: started
-    
+  - name: customize /etc/environment
+    ansible.builtin.lineinfile:
+      dest: "/etc/environment"
+      state: present
+      regexp: "^{{ item.key }}="
+      line: "{{ item.key }}={{ item.value }}"
+    with_items: "{{ os_env }}"  
+
   handlers:
     - name: restart_crond
       service:
