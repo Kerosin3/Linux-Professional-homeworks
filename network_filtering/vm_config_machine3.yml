@@ -1,0 +1,196 @@
+---
+- name: main_playbook
+  hosts: all 
+  gather_facts: true
+  become: true
+  vars:
+    test_version: 1
+    installed_soft: ['git','mc','iproute','tcpdump','net-tools','nmap','nftables','bash-completion','bash-completion-extras','most','zsh','nginx','iptables-services']
+    host_related: "10.10.10.2"
+    os_env:
+      - key: EDITOR
+        value: vi
+      - key: TERM
+        value: xterm
+
+
+  tasks:
+  - name: installing soft
+    ansible.builtin.yum:
+      name:
+        - "{{ item }}"
+      state: present
+    loop: "{{ installed_soft  }}"
+  - name: installing soft main
+    ansible.builtin.yum:
+      name: net-tools
+      state: present
+  - name: append pager vagrant
+    ansible.builtin.lineinfile:
+      dest: /home/vagrant/.bashrc
+      line: 'export PAGER="most"'
+    run_once: true
+  - name: add iptables autoload
+    shell: grep -c "^iptables-restore" /etc/rc.local || true
+    register: test_grep
+  - name: add iptables to rc.local
+    lineinfile:
+      dest: /etc/rc.local
+      mode: 1644
+      line: iptables-restore /etc/sysconfig/iptables
+    when: test_grep.stdout == "0"    
+  - name: append pager root
+    ansible.builtin.lineinfile:
+      dest: /root/.bashrc
+      line: 'export PAGER="most"'
+    run_once: true
+  - name: Allow related and established connections
+    ansible.builtin.iptables:
+      chain: INPUT
+      match: conntrack
+      ctstate: ESTABLISHED,RELATED
+      jump: ACCEPT
+    become: yes
+  - name: open ssh
+    ansible.builtin.iptables:
+      chain: INPUT
+      protocol: tcp
+      ctstate: NEW
+      match: conntrack
+      destination_port: 22
+      jump: ACCEPT
+      comment: allow ssh
+    become: yes
+  - name: enable loopback
+    ansible.builtin.iptables:
+      chain: INPUT
+      in_interface: lo
+      jump: ACCEPT
+      comment: enable loopback
+    become: yes
+  - name: Allow related connections host1
+    ansible.builtin.iptables:
+      chain: INPUT
+      action: insert
+      source: "{{ host_related }}"
+      jump: ACCEPT
+    become: yes
+    run_once: true
+  - name: Allow related connections host1
+    ansible.builtin.iptables:
+      chain: INPUT
+      action: insert
+      source: "{{ host_related }}"
+      jump: ACCEPT
+    become: yes
+    run_once: true
+  - name: mirror 80 port to 81
+    ansible.builtin.iptables:
+      table: nat
+      chain: PREROUTING
+      protocol: tcp
+      destination_port: 81
+      action: append
+      jump: REDIRECT
+      to_ports: 80
+      comment: mirror 80 to 81
+    become: yes
+    run_once: true
+  - name: copy git zsh
+    ansible.builtin.git:
+      repo: https://github.com/blackden/zshrc.git
+      dest: /root/zshrc
+    run_once: true
+  - name: patching default gateway
+    ansible.builtin.template:
+      src: ./settings/internet_machine3.j2
+      dest: /etc/sysconfig/network
+      mode: 744
+    notify: restart_network
+  - name: Copy file with owner and permissions
+    ansible.builtin.copy:
+      src: "{{ item.0 }}"
+      dest: "{{ item.1 }}"
+      remote_src: yes
+      owner: root
+      group: root
+      mode: '0744'
+    with_together:
+      - ['/root/zshrc/zshrc','/root/zshrc/zshrc.pre']
+      - ['/root/.zshrc','/root/.zshrc.pre']
+    run_once: true
+  - name: copy zsh settings
+    ansible.builtin.copy:
+      src: "{{ item }}"
+      dest: "/home/vagrant/"
+      owner: root
+      remote_src: yes
+      group: vagrant
+      mode: '0764'
+    loop:
+      - /root/.zshrc
+      - /root/.zshrc.pre
+    run_once: true
+  - name: change shell for root
+    ansible.builtin.shell: usermod -s /bin/zsh root
+    run_once: true
+  - name: change shell for user
+    ansible.builtin.shell: usermod -s /usr/bin/zsh vagrant
+    run_once: true
+  - name: fix ssh settings
+    ansible.builtin.lineinfile:
+      path: "/etc/ssh/sshd_config"
+      regex: "^PasswordAuthentication no"
+      line: "PasswordAuthentication yes"
+      insertafter: EOF
+      state: present
+    notify: restart_sshd
+    run_once: true
+  - name: setting forwarding enable centos
+    ansible.posix.sysctl:
+      name: net.ipv4.conf.all.forwarding
+      value: '1'
+      state: present
+  - name: Start nginx
+    ansible.builtin.service:
+      name: nginx
+      state: started
+  - name: customize /etc/environment
+    ansible.builtin.lineinfile:
+      dest: "/etc/environment"
+      state: present
+      regexp: "^{{ item.key }}="
+      line: "{{ item.key }}={{ item.value }}"
+    with_items: "{{ os_env }}"  
+  - name: set default gateway 10.10.10.1
+    ansible.builtin.lineinfile:
+      dest: /etc/sysconfig/network-scripts/ifcfg-eth0
+      line: GATEWAY={{ gateway_def }}
+      state: present
+    notify: restart_network
+  - name: start iptables persistent
+    ansible.builtin.systemd:
+      name: iptables
+      state: started
+  - name: saving iptables settings
+    ansible.builtin.command: service iptables save
+    when: iptables_settings.changed
+ 
+  handlers:
+    - name: restart_crond
+      service:
+        name=crond
+        state=restarted
+    - name: restart_send_mail
+      service:
+        name=sendmail
+        state=restarted
+    - name: restart_sshd
+      service:
+        name=sshd
+        state=restarted
+    - name: restart_network
+      service:
+        name=network
+        state=restarted
+

@@ -5,14 +5,13 @@
   become: true
   vars:
     test_version: 1
-    installed_soft: ['git','mc','iproute','tcpdump','net-tools','nmap','nftables','bash-completion','bash-completion-extras','most','zsh','nginx']
-    host2_ip: "192.168.1.101"
+    installed_soft: ['git','mc','iproute','tcpdump','net-tools','nmap','nftables','bash-completion','bash-completion-extras','most','zsh']
+    host_related: "10.10.10.2"
     os_env:
       - key: EDITOR
         value: vi
       - key: TERM
         value: xterm
-
 
   tasks:
   - name: installing soft
@@ -63,20 +62,29 @@
     ansible.builtin.iptables:
       chain: INPUT
       action: insert
-      source: "{{ host2_ip }}"
+      source: "{{ host_related }}"
       jump: ACCEPT
     become: yes
-    when: (ansible_hostname == "centos7machine1")
     run_once: true
   - name: Allow related connections host1
     ansible.builtin.iptables:
       chain: INPUT
       action: insert
-      source: "{{ host1_ip }}"
+      source: "{{ host_related }}"
       jump: ACCEPT
     become: yes
-    when: (ansible_hostname == "centos7machine2")
     run_once: true
+  - name: Set the policy for the INPUT chain to ACCEPT
+    ansible.builtin.iptables:
+      chain: INPUT
+      policy: ACCEPT
+  - name: turn on MASQUERADE
+    ansible.builtin.command: sudo iptables -t nat -A POSTROUTING ! -d 192.168.0.0/16 -o eth0 -j MASQUERADE
+    run_once: true
+  - name: setting zsh shell for root
+    ansible.builtin.shell: usermod -s /bin/zsh root
+  - name: setting zsh shell for vagrant
+    ansible.builtin.shell: usermod -s /usr/bin/zsh vagrant
   - name: copy git zsh
     ansible.builtin.git:
       repo: https://github.com/blackden/zshrc.git
@@ -121,24 +129,18 @@
       state: present
     notify: restart_sshd
     run_once: true
-      #- name: setting forwarding enable centos
-      #ansible.posix.sysctl:
-      #name: net.ipv4.conf.all.forwarding
-      #value: '1'
-      #state: present
-      #when: (ansible_hostname == "centos7machine2")
-  - name: Start nginx
-    ansible.builtin.service:
-      name: nginx
-      state: started
+  - name: setting forwarding enable centos
+    ansible.posix.sysctl:
+      name: net.ipv4.conf.all.forwarding
+      value: '1'
+      state: present
   - name: customize /etc/environment
     ansible.builtin.lineinfile:
       dest: "/etc/environment"
       state: present
       regexp: "^{{ item.key }}="
       line: "{{ item.key }}={{ item.value }}"
-    with_items: "{{ os_env }}"  
-
+    with_items: "{{ os_env }}"
   handlers:
     - name: restart_crond
       service:

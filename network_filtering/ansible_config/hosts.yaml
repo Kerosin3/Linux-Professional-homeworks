@@ -4,9 +4,9 @@ all:
   children:
     testnet:
       hosts:
-        centos8machine1:
-        centos8machine2:
-        centos8machine3:
+        centos7machine1:
+        centos7machine2:
+        centos7machine3:
   vars:
     ansible_user: vagrant
     ansible_host: 127.0.0.1
