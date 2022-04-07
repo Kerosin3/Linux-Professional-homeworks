@@ -1,0 +1,112 @@
+---
+- name: main_playbook
+  hosts: all 
+  gather_facts: true
+  become: true
+  vars:
+    test_version: 1
+    installed_soft: ['git','mc','tcpdump','net-tools','nmap','nftables','bash-completion','most','zsh','iptables-persistent']
+    host_related: "10.10.10.2"
+    os_env:
+      - key: EDITOR
+        value: vi
+      - key: TERM
+        value: xterm
+
+
+  tasks:
+  - name: installing soft
+    ansible.builtin.package:
+      name:
+        - "{{ item }}"
+      state: present
+    loop: "{{ installed_soft  }}"
+  - name: installing soft main
+    ansible.builtin.package:
+      name: net-tools
+      state: present
+##########--------------------enabling services--------------------------############
+  - name: setting forwarding enable 
+    ansible.posix.sysctl:
+      name: net.ipv4.conf.all.forwarding
+      value: '1'
+      state: present
+#------------------------------------------------#
+  - name: append pager root
+    ansible.builtin.lineinfile:
+      dest: /root/.bashrc
+      line: 'export PAGER="most"'
+    run_once: true
+#-------------------------------------------#
+  - name: copy git zsh
+    ansible.builtin.git:
+      repo: https://github.com/blackden/zshrc.git
+      dest: /root/zshrc
+    run_once: true
+  - name: Copy file with owner and permissions
+    ansible.builtin.copy:
+      src: "{{ item.0 }}"
+      dest: "{{ item.1 }}"
+      remote_src: yes
+      owner: root
+      group: root
+      mode: '0744'
+    with_together:
+      - ['/root/zshrc/zshrc','/root/zshrc/zshrc.pre']
+      - ['/root/.zshrc','/root/.zshrc.pre']
+    run_once: true
+  - name: copy zsh settings
+    ansible.builtin.copy:
+      src: "{{ item }}"
+      dest: "/home/vagrant/"
+      owner: root
+      remote_src: yes
+      group: vagrant
+      mode: '0764'
+    loop:
+      - /root/.zshrc
+      - /root/.zshrc.pre
+    run_once: true
+  - name: change shell for root
+    ansible.builtin.shell: usermod -s /bin/zsh root
+    run_once: true
+  - name: change shell for user
+    ansible.builtin.shell: usermod -s /usr/bin/zsh vagrant
+    run_once: true
+  - name: fix ssh settings
+    ansible.builtin.lineinfile:
+      path: "/etc/ssh/sshd_config"
+      regex: "^PasswordAuthentication no"
+      line: "PasswordAuthentication yes"
+      insertafter: EOF
+      state: present
+    notify: restart_sshd
+    run_once: true
+  - name: customize /etc/environment
+    ansible.builtin.lineinfile:
+      dest: "/etc/environment"
+      state: present
+      regexp: "^{{ item.key }}="
+      line: "{{ item.key }}={{ item.value }}"
+    with_items: "{{ os_env }}"  
+  - name: restart network
+    ansible.builtin.shell: systemctl restart systemd-networkd
+
+  handlers:
+    - name: restart_crond
+      service:
+        name=crond
+        state=restarted
+    - name: restart_send_mail
+      service:
+        name=sendmail
+        state=restarted
+    - name: restart_sshd
+      service:
+        name=sshd
+        state=restarted
+    - name: restart_network
+      service:
+        name=network
+        state=restarted
+
