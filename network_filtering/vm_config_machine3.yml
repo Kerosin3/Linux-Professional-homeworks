@@ -25,20 +25,31 @@
     ansible.builtin.yum:
       name: net-tools
       state: present
-  - name: append pager vagrant
-    ansible.builtin.lineinfile:
-      dest: /home/vagrant/.bashrc
-      line: 'export PAGER="most"'
-    run_once: true
+##########--------------------enabling services--------------------------############
+  - name: setting forwarding enable centos
+    ansible.posix.sysctl:
+      name: net.ipv4.conf.all.forwarding
+      value: '1'
+      state: present
+  - name: enable iptables service
+    ansible.builtin.systemd:
+      name: iptables
+      state: started
+      enabled: yes
+#------------------------------------------------#
   - name: add iptables autoload
     shell: grep -c "^iptables-restore" /etc/rc.local || true
     register: test_grep
-  - name: add iptables to rc.local
-    lineinfile:
-      dest: /etc/rc.local
-      mode: 1644
-      line: iptables-restore /etc/sysconfig/iptables
+  - name: flush iptables first time
+    shell: iptables -F
     when: test_grep.stdout == "0"    
+  - name: add iptables to rc.local (autoload) 
+    lineinfile:
+      dest: /etc/rc.d/rc.local
+      mode: 1744
+      line: iptables-restore /etc/sysconfig/iptables_test_settings
+    when: test_grep.stdout == "0"    
+#------------------------------------------------#
   - name: append pager root
     ansible.builtin.lineinfile:
       dest: /root/.bashrc
@@ -51,6 +62,7 @@
       ctstate: ESTABLISHED,RELATED
       jump: ACCEPT
     become: yes
+    run_once: true
   - name: open ssh
     ansible.builtin.iptables:
       chain: INPUT
@@ -61,6 +73,7 @@
       jump: ACCEPT
       comment: allow ssh
     become: yes
+    run_once: true
   - name: enable loopback
     ansible.builtin.iptables:
       chain: INPUT
@@ -68,6 +81,7 @@
       jump: ACCEPT
       comment: enable loopback
     become: yes
+    run_once: true
   - name: Allow related connections host1
     ansible.builtin.iptables:
       chain: INPUT
@@ -96,6 +110,11 @@
       comment: mirror 80 to 81
     become: yes
     run_once: true
+#-------------------------------------------#
+  - name: saving iptables settings
+    ansible.builtin.shell: iptables-save > /etc/sysconfig/iptables_test_settings
+    run_once: true
+#-------------------------------------------#
   - name: copy git zsh
     ansible.builtin.git:
       repo: https://github.com/blackden/zshrc.git
@@ -152,9 +171,10 @@
       value: '1'
       state: present
   - name: Start nginx
-    ansible.builtin.service:
+    ansible.builtin.systemd:
       name: nginx
       state: started
+      enabled: yes
   - name: customize /etc/environment
     ansible.builtin.lineinfile:
       dest: "/etc/environment"
@@ -168,14 +188,11 @@
       line: GATEWAY={{ gateway_def }}
       state: present
     notify: restart_network
-  - name: start iptables persistent
-    ansible.builtin.systemd:
-      name: iptables
-      state: started
-  - name: saving iptables settings
-    ansible.builtin.command: service iptables save
-    when: iptables_settings.changed
- 
+  - name: restart network
+    ansible.builtin.shell: systemctl restart network.service
+  - name: restart network2
+    ansible.builtin.shell: systemctl restart network.service
+
   handlers:
     - name: restart_crond
       service:

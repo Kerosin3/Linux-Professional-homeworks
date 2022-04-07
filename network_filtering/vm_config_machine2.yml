@@ -16,9 +16,11 @@
 
 
   tasks:
-  - name: flush iptables
-    shell: iptables -F
-    run_once: true
+  - name: setting forwarding enable centos
+    ansible.posix.sysctl:
+      name: net.ipv4.conf.all.forwarding
+      value: '1'
+      state: present
   - name: installing soft
     ansible.builtin.yum:
       name:
@@ -32,20 +34,24 @@
   - name: add iptables autoload
     shell: grep -c "^iptables-restore" /etc/rc.local || true
     register: test_grep
+  - name: flush iptables
+    shell: iptables -F
+    when: test_grep.stdout == "0"    
   - name: add iptables to rc.local 
     lineinfile:
       dest: /etc/rc.d/rc.local
       mode: 1744
-      line: iptables-restore /etc/sysconfig/iptables
+      line: iptables-restore /etc/sysconfig/iptables_test_settings
     when: test_grep.stdout == "0"    
-  - name: ensure file exists
-    ansible.builtin.copy:
-      content: "iptables-restore /etc/sysconfig/iptables"
-      dest: /etc/rc.local
-      force: no
-      group: root
-      owner: root
-      mode: 0555
+      #  - name: ensure file exists
+      # ansible.builtin.copy:
+      #content: "iptables-restore /etc/sysconfig/iptables"
+      #dest: /etc/rc.local
+      #force: no
+      #group: root
+      #owner: root
+      #mode: 0555
+      #register: iptables_settings
   - name: append pager vagrant
     ansible.builtin.lineinfile:
       dest: /home/vagrant/.bashrc
@@ -103,9 +109,20 @@
       jump: SNAT
       to_source: "{{ ip_main }}"
       comment: redirect 
-    register: iptables_settings
     become: yes
     run_once: true
+  - name: saving iptables settings
+    ansible.builtin.shell: iptables-save > /etc/sysconfig/iptables_test_settings
+    when: test_grep.stdout == "0"    
+    register: chainzero
+  - name: start iptables persistent
+    ansible.builtin.systemd:
+      name: iptables
+      state: started
+      enabled: yes
+        #  - name: load iptables settings
+        #    ansible.builtin.shell: iptables-restore /etc/sysconfig/iptables_test_settings
+        #    when: test_grep.stdout == "0"    
   - name: copy git zsh
     ansible.builtin.git:
       repo: https://github.com/blackden/zshrc.git
@@ -116,7 +133,6 @@
       src: ./settings/internet_machine2.j2
       dest: /etc/sysconfig/network
       mode: 744
-    notify: restart_network
   - name: Copy file with owner and permissions
     ansible.builtin.copy:
       src: "{{ item.0 }}"
@@ -156,11 +172,6 @@
       state: present
     notify: restart_sshd
     run_once: true
-  - name: setting forwarding enable centos
-    ansible.posix.sysctl:
-      name: net.ipv4.conf.all.forwarding
-      value: '1'
-      state: present
   - name: customize /etc/environment
     ansible.builtin.lineinfile:
       dest: "/etc/environment"
@@ -173,15 +184,9 @@
       dest: /etc/sysconfig/network-scripts/ifcfg-eth0
       line: GATEWAY={{ gateway_def }}
       state: present
-    notify: restart_network
-  - name: start iptables persistent
-    ansible.builtin.systemd:
-      name: iptables
-      state: started
-  - name: saving iptables settings
-    ansible.builtin.command: service iptables save
-    when: iptables_settings.changed
   - name: restart network
+    ansible.builtin.shell: systemctl restart network.service
+  - name: restart network2
     ansible.builtin.shell: systemctl restart network.service
   
   handlers:

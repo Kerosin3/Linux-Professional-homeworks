@@ -5,14 +5,14 @@
   become: true
   vars:
     test_version: 1
-    installed_soft: ['git','mc','iproute','tcpdump','net-tools','nmap','nftables','bash-completion','bash-completion-extras','most','zsh']
+    installed_soft: ['git','mc','iproute','tcpdump','net-tools','nmap','nftables','bash-completion','bash-completion-extras','most','zsh','traceroute','iptables-services']
     host_related: "10.10.10.2"
     os_env:
       - key: EDITOR
         value: vi
       - key: TERM
         value: xterm
-
+ #------------------------------------------------------#
   tasks:
   - name: installing soft
     ansible.builtin.yum:
@@ -24,6 +24,31 @@
     ansible.builtin.yum:
       name: net-tools
       state: present
+##########--------------------enabling services--------------------------############
+  - name: setting forwarding enable centos
+    ansible.posix.sysctl:
+      name: net.ipv4.conf.all.forwarding
+      value: '1'
+      state: present
+  - name: enable iptables service
+    ansible.builtin.systemd:
+      name: iptables
+      state: started
+      enabled: yes
+#------------------------------------------------#
+  - name: add iptables autoload
+    shell: grep -c "^iptables-restore" /etc/rc.local || true
+    register: test_grep
+  - name: flush iptables first time
+    shell: iptables -F
+    when: test_grep.stdout == "0"    
+  - name: add iptables to rc.local (autoload) 
+    lineinfile:
+      dest: /etc/rc.d/rc.local
+      mode: 1744
+      line: iptables-restore /etc/sysconfig/iptables_test_settings
+    when: test_grep.stdout == "0"    
+#------------------------------------------------#
   - name: append pager vagrant
     ansible.builtin.lineinfile:
       dest: /home/vagrant/.bashrc
@@ -78,9 +103,15 @@
     ansible.builtin.iptables:
       chain: INPUT
       policy: ACCEPT
+    run_once: true
   - name: turn on MASQUERADE
     ansible.builtin.command: sudo iptables -t nat -A POSTROUTING ! -d 192.168.0.0/16 -o eth0 -j MASQUERADE
     run_once: true
+#-----------------------------------------------------------#
+  - name: saving iptables settings
+    ansible.builtin.shell: iptables-save > /etc/sysconfig/iptables_test_settings
+    run_once: true
+#-----------------------------------------------------------#
   - name: setting zsh shell for root
     ansible.builtin.shell: usermod -s /bin/zsh root
   - name: setting zsh shell for vagrant
@@ -129,11 +160,6 @@
       state: present
     notify: restart_sshd
     run_once: true
-  - name: setting forwarding enable centos
-    ansible.posix.sysctl:
-      name: net.ipv4.conf.all.forwarding
-      value: '1'
-      state: present
   - name: customize /etc/environment
     ansible.builtin.lineinfile:
       dest: "/etc/environment"
