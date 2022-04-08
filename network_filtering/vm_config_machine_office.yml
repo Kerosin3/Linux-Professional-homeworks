@@ -12,7 +12,7 @@
         value: vi
       - key: TERM
         value: xterm
-
+    desired_interface_name: ""
 
   tasks:
   - name: installing soft
@@ -32,6 +32,30 @@
       value: '1'
       state: present
 #------------------------------------------------#
+#  - name: parse interface to route
+#    set_fact:
+#      desired_interface_name="{{ item }}"
+#    when: hostvars[inventory_hostname]['ansible_{{item}}']['ipv4']['address'] == "{{ ip_main }}"
+#    with_items:
+#      - "{{ ansible_interfaces }}"
+#  - name: print default interface
+#    debug:
+#      var: desired_interface_name
+#  - name: patching gaweway ubuntu office
+#    ansible.builtin.template:
+#      src: ./settings/interfaces_ubuntu_office.j2
+#      dest: /etc/network/interfaces
+#        mode: 744
+#------------------------------------------------#
+  - name: insert route office1router
+    ansible.builtin.blockinfile:
+      dest: /etc/netplan/50-vagrant.yaml
+      insertafter: "{{ ip_main }}"
+      block: |6
+                  dhcp4: yes
+                  dhcp4-overrides:
+                      use-routes: false
+                  gateway4: "{{ gateway_def }}"
   - name: append pager root
     ansible.builtin.lineinfile:
       dest: /root/.bashrc
@@ -42,6 +66,7 @@
     ansible.builtin.git:
       repo: https://github.com/blackden/zshrc.git
       dest: /root/zshrc
+      clone: yes  
     run_once: true
   - name: Copy file with owner and permissions
     ansible.builtin.copy:
@@ -89,6 +114,8 @@
       regexp: "^{{ item.key }}="
       line: "{{ item.key }}={{ item.value }}"
     with_items: "{{ os_env }}"  
+  - name: apply netplan
+    ansible.builtin.command: netplan apply
   - name: restart network
     ansible.builtin.shell: systemctl restart systemd-networkd
 

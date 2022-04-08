@@ -43,15 +43,14 @@
       mode: 1744
       line: iptables-restore /etc/sysconfig/iptables_test_settings
     when: test_grep.stdout == "0"    
-      #  - name: ensure file exists
-      # ansible.builtin.copy:
-      #content: "iptables-restore /etc/sysconfig/iptables"
-      #dest: /etc/rc.local
-      #force: no
-      #group: root
-      #owner: root
-      #mode: 0555
       #register: iptables_settings
+#------------------------------------------------#
+#  - name: patching routes centralrouter
+#    ansible.builtin.template:
+#      src: ./settings/route_central.j2
+#      dest: /etc/sysconfig/network-scripts/route-eth1
+#     mode: 744
+#------------------------------------------------#
   - name: append pager vagrant
     ansible.builtin.lineinfile:
       dest: /home/vagrant/.bashrc
@@ -115,11 +114,11 @@
     ansible.builtin.shell: iptables-save > /etc/sysconfig/iptables_test_settings
     when: test_grep.stdout == "0"    
     register: chainzero
-  - name: start iptables persistent
-    ansible.builtin.systemd:
-      name: iptables
-      state: started
-      enabled: yes
+      #  - name: start iptables persistent
+      #ansible.builtin.systemd:
+      #name: iptables
+      #state: started
+      #enabled: yes
         #  - name: load iptables settings
         #    ansible.builtin.shell: iptables-restore /etc/sysconfig/iptables_test_settings
         #    when: test_grep.stdout == "0"    

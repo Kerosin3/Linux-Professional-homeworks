@@ -49,6 +49,12 @@
       line: iptables-restore /etc/sysconfig/iptables_test_settings
     when: test_grep.stdout == "0"    
 #------------------------------------------------#
+  - name: patching routes centralrouter
+    ansible.builtin.template:
+      src: ./settings/route_central.j2
+      dest: /etc/sysconfig/network-scripts/route-eth1
+      mode: 744
+#------------------------------------------------#
   - name: append pager vagrant
     ansible.builtin.lineinfile:
       dest: /home/vagrant/.bashrc
@@ -167,6 +173,11 @@
       regexp: "^{{ item.key }}="
       line: "{{ item.key }}={{ item.value }}"
     with_items: "{{ os_env }}"
+  - name: restart network
+    ansible.builtin.shell: systemctl restart network.service
+  - name: restart network2
+    ansible.builtin.shell: systemctl restart network.service
+ 
   handlers:
     - name: restart_crond
       service:

@@ -1,0 +1,4 @@
+{% for item in ip_to_route %}
+{{ item }} via {{ host_related }}
+{% endfor %}
+##{{ hostvars[inventory_hostname] }}

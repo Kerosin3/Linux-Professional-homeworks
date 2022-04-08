@@ -119,7 +119,7 @@
     ansible.builtin.git:
       repo: https://github.com/blackden/zshrc.git
       dest: /root/zshrc
-    run_once: true
+    when: test_grep.stdout == "0"    
   - name: patching default gateway
     ansible.builtin.template:
       src: ./settings/internet_machine3.j2

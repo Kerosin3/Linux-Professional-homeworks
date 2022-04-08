@@ -1,0 +1,8 @@
+# The primary network interface {{ ansible_facts['hostname'] }}
+auto {{ desired_interface_name }}
+
+iface {{ desired_interface_name }} inet static
+address {{ ip_main }}
+netmask 255.255.255.248
+gateway {{ gateway_def }}
+up route add -net 192.168.0.0 netmask 255.255.0.0 gw {{ gateway_def }}
