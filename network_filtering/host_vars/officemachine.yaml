@@ -3,3 +3,5 @@ ansible_port: 2053
 ip_main: "192.168.1.102"
 gateway_def: "192.168.1.101"
 net_to_route: "192.168.1.100/29"
+host_related1: "192.168.0.0/16"  
+host_related2: "10.10.10.0/17"  

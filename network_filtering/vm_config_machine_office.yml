@@ -5,7 +5,7 @@
   become: true
   vars:
     test_version: 1
-    installed_soft: ['git','mc','tcpdump','net-tools','nmap','nftables','bash-completion','most','zsh','iptables-persistent']
+    installed_soft: ['git','mc','tcpdump','net-tools','nmap','nftables','bash-completion','most','zsh','iptables-persistent','knockd']
     host_related: "10.10.10.2"
     os_env:
       - key: EDITOR
@@ -32,6 +32,7 @@
       value: '1'
       state: present
 #------------------------------------------------#
+
 #  - name: parse interface to route
 #    set_fact:
 #      desired_interface_name="{{ item }}"
@@ -46,6 +47,62 @@
 #      src: ./settings/interfaces_ubuntu_office.j2
 #      dest: /etc/network/interfaces
 #        mode: 744
+#------------------------------------------------#
+  - name: Allow related and established connections
+    ansible.builtin.iptables:
+      chain: INPUT
+      match: conntrack
+      ctstate: ESTABLISHED,RELATED
+      jump: ACCEPT
+    become: yes
+      #- name: open ssh
+      #ansible.builtin.iptables:
+      #chain: INPUT
+      #protocol: tcp
+      #ctstate: NEW
+      #match: conntrack
+      #destination_port: 22
+      #jump: ACCEPT
+      #comment: allow ssh
+      #become: yes
+  - name: enable loopback
+    ansible.builtin.iptables:
+      chain: INPUT
+      in_interface: lo
+      jump: ACCEPT
+      comment: enable loopback
+    become: yes
+    run_once: true
+  - name: Allow related connections host1
+    ansible.builtin.iptables:
+      chain: INPUT
+      action: insert
+      source: "{{ host_related }}"
+      jump: ACCEPT
+    become: yes
+    run_once: true
+  - name: Allow related connections host1
+    ansible.builtin.iptables:
+      chain: INPUT
+      action: insert
+      source: "{{ host_related1 }}"
+      jump: ACCEPT
+    become: yes
+    run_once: true
+  - name: Allow related connections host2
+    ansible.builtin.iptables:
+      chain: INPUT
+      action: insert
+      source: "{{ host_related2 }}"
+      jump: ACCEPT
+    become: yes
+    run_once: true
+  - name: Set the policy for the INPUT chain to ACCEPT
+    ansible.builtin.iptables:
+      chain: INPUT
+      policy: ACCEPT
+    run_once: true
+ 
 #------------------------------------------------#
   - name: insert route office1router
     ansible.builtin.blockinfile:
