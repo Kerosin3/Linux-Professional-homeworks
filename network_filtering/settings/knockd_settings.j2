@@ -1,0 +1,14 @@
+[options]
+        UseSyslog
+
+[openSSH]
+        sequence    = 7010:tcp,7020:tcp,7030:tcp
+        seq_timeout = 5
+        command     = /sbin/iptables -I INPUT -s %IP% -p tcp --dport {{ ssh_port_h }} -j ACCEPT
+        tcpflags    = syn
+
+[closeSSH]
+        sequence    = 7030:tcp,7020:tcp,7010:tcp
+        seq_timeout = 5
+        command     = /sbin/iptables -D INPUT -s %IP% -p tcp --dport {{ ssh_port_h }} -j ACCEPT
+        tcpflags    = syn

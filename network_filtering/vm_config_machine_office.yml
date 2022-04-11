@@ -33,15 +33,15 @@
       state: present
 #------------------------------------------------#
 
-#  - name: parse interface to route
-#    set_fact:
-#      desired_interface_name="{{ item }}"
-#    when: hostvars[inventory_hostname]['ansible_{{item}}']['ipv4']['address'] == "{{ ip_main }}"
-#    with_items:
-#      - "{{ ansible_interfaces }}"
-#  - name: print default interface
-#    debug:
-#      var: desired_interface_name
+  - name: parse interface to route
+    set_fact:
+      desired_interface_name="{{ item }}"
+    when: hostvars[inventory_hostname]['ansible_{{item}}']['ipv4']['address'] == "{{ ip_main }}"
+    with_items:
+      - "{{ ansible_interfaces }}"
+  - name: print default interface
+    debug:
+      var: desired_interface_name
 #  - name: patching gaweway ubuntu office
 #    ansible.builtin.template:
 #      src: ./settings/interfaces_ubuntu_office.j2
@@ -52,19 +52,20 @@
     ansible.builtin.iptables:
       chain: INPUT
       match: conntrack
-      ctstate: ESTABLISHED,RELATED
+      ctstate: ESTABLISHED,RELATED,NEW
       jump: ACCEPT
     become: yes
-      #- name: open ssh
-      #ansible.builtin.iptables:
-      #chain: INPUT
-      #protocol: tcp
-      #ctstate: NEW
-      #match: conntrack
-      #destination_port: 22
-      #jump: ACCEPT
-      #comment: allow ssh
-      #become: yes
+  - name: open ssh
+    ansible.builtin.iptables:
+      chain: INPUT
+      protocol: tcp
+      ctstate: NEW
+      match: conntrack
+      destination_port: 22
+      jump: ACCEPT
+      comment: allow ssh
+    become: yes
+    run_once: true
   - name: enable loopback
     ansible.builtin.iptables:
       chain: INPUT
@@ -81,14 +82,14 @@
       jump: ACCEPT
     become: yes
     run_once: true
-  - name: Allow related connections host1
-    ansible.builtin.iptables:
-      chain: INPUT
-      action: insert
-      source: "{{ host_related1 }}"
-      jump: ACCEPT
-    become: yes
-    run_once: true
+      #  - name: Allow related connections host1
+      #ansible.builtin.iptables:
+      #chain: INPUT
+      #action: insert
+      #source: "{{ host_related1 }}"
+      #jump: ACCEPT
+      #become: yes
+      #run_once: true
   - name: Allow related connections host2
     ansible.builtin.iptables:
       chain: INPUT
@@ -97,10 +98,10 @@
       jump: ACCEPT
     become: yes
     run_once: true
-  - name: Set the policy for the INPUT chain to ACCEPT
+  - name: Set the policy for the INPUT chain to DROP
     ansible.builtin.iptables:
       chain: INPUT
-      policy: ACCEPT
+      policy: DROP
     run_once: true
  
 #------------------------------------------------#
@@ -155,6 +156,21 @@
   - name: change shell for user
     ansible.builtin.shell: usermod -s /usr/bin/zsh vagrant
     run_once: true
+  - name: add sshd port 22
+    ansible.builtin.lineinfile:
+      path: "/etc/ssh/sshd_config"
+      regex: "^#Port 22"
+      line: "Port 22"
+      state: present
+    run_once: true
+  - name: add sshd port 666
+    ansible.builtin.lineinfile:
+      path: "/etc/ssh/sshd_config"
+      insertafter: "^Port 22"
+      line: "Port 666"
+      state: present
+    notify: restart_sshd
+    run_once: true
   - name: fix ssh settings
     ansible.builtin.lineinfile:
       path: "/etc/ssh/sshd_config"
@@ -171,10 +187,43 @@
       regexp: "^{{ item.key }}="
       line: "{{ item.key }}={{ item.value }}"
     with_items: "{{ os_env }}"  
+  - name: setting knockd 1
+    ansible.builtin.lineinfile:
+      path: /etc/default/knockd
+      regexp: '^START_KNOCKD='
+      line: START_KNOCKD=1
+  - name: setting knockd input interface
+    ansible.builtin.lineinfile:
+      path: /etc/default/knockd
+      regexp: '^#KNOCKD=_OPTS='
+      line: KNOCKD_OPTS="-i "{{ desired_interface_name }}""
+  - name: setting knockd service settings-rule
+    ansible.builtin.template:
+      src: ./settings/knockd_settings.j2
+      dest: /etc/knockd.conf
+      force: yes
+      mode: 0644
+      backup: yes
+  - name: enable iptables-persistent service
+    ansible.builtin.systemd:
+      name: netfilter-persistent.service
+      state: started
+      enabled: yes
+  - name: save iptables settings
+    ansible.builtin.shell: netfilter-persistent save
+    run_once: true
+  - name: enable knockd service 
+    ansible.builtin.systemd:
+      name: knockd
+      state: started
+      enabled: yes
   - name: apply netplan
     ansible.builtin.command: netplan apply
   - name: restart network
     ansible.builtin.shell: systemctl restart systemd-networkd
+  - name: restart sshd
+    ansible.builtin.shell: systemctl restart sshd
+
 
   handlers:
     - name: restart_crond

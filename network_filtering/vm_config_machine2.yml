@@ -51,6 +51,16 @@
 #      dest: /etc/sysconfig/network-scripts/route-eth1
 #     mode: 744
 #------------------------------------------------#
+  - name: copy knock_enable script
+    ansible.builtin.template:
+      src: ./settings/knock_enable.j2
+      dest: /home/vagrant/knock_enable.sh
+      mode: 1777
+  - name: copy knock_disable script
+    ansible.builtin.template:
+      src: ./settings/knock_disable.j2
+      dest: /home/vagrant/knock_disable.sh
+      mode: 1777
   - name: append pager vagrant
     ansible.builtin.lineinfile:
       dest: /home/vagrant/.bashrc

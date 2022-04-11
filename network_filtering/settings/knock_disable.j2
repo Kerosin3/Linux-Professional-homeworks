@@ -1,0 +1,4 @@
+for port in 7030 7020 7010;
+do
+        nmap -Pn --max-retries 0 -p $port 192.168.1.102
+done
