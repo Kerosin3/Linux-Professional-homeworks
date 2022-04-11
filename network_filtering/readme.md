@@ -7,7 +7,7 @@
 3. В получившейся сети реализован роутинг интернета через машину centos7machine1 10.10.10.1
 
 ### Схема стенда
-![](https://github.com/Kerosin3/linux_hw/tree/main/network_filtering/pics/diagramm.png)
+![](https://github.com/Kerosin3/linux_hw/blob/main/network_filtering/pics/diagramm.png)
 
 # Запуск и проверка работы
 
