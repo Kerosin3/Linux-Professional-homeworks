@@ -1,5 +1,17 @@
-```xml
-<myxml>
-<mxfile host="app.diagrams.net" modified="2022-04-11T12:57:14.323Z" agent="5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.60 Safari/537.36" etag="zmZ_PYMEu_o6gfS2pElP" version="17.4.2" type="device"><diagram id="mrdmOFRpSb20TLttTEPK" name="Page-1">7Vptc6M2EP41nrn7YA8IjPFHY8eXdHrXm8nMtV9lEKBGSFTIsXO/vhJIvCdx29jJTJ3xxGJXbzy7++wKM3HW2fELh3n6lUWITIAVHSfOZgKA7fi+/FKSp0qy8N1KkHAc6U6N4B7/RFpoaekeR6jodBSMEYHzrjBklKJQdGSQc3bodosZ6a6awwQNBPchJEPp7zgSaSX151Yjv0U4Sc3KtqU1GTSdtaBIYcQOLZFzM3HWnDFRtbLjGhEFnsGlGrd9RltvjCMqThlwf0t+ru6CaHXrHr7+uPtFBODP6bya5RGSvb7hCfCInC8ockjVrsWThsL7a6+2GoSMMD5xVlLJk90nuaj8rOX/VuuzajpBCTgV0xhmmDxVY+REMMtLpeO48jtF5BEJHMKBpjtJUfqGmsJe5MeertqlUlLGM0i66oO2kNK71T5LJUFCID6VtxpimoyOF+goppDghFbqUKKNeFeNaVTaQOmt1tZKpeCQFrGc1ExPUd3hwHjUXb09fAfDh4SzPY2mPcyB69dYA3fZtOct5CNc5ARq1DEluLVwTBgU7Q0Z48pWUhpZ3hArFhkMUznONk6x46aDbc30Z6gzEumLlRcZMeg4FHhEXNmd/Ap3iHxnBRaYSZg3GY4i1ScwHVYV/o0iFRmR17by0xTmar7smCgGmu1ggcMZL7kgiDEha4WdjLZNeadygODsoQ7mcoqKdUpwjC03czVcOs9W++7mtvZTJyC9HWuvcALtKY1ATaFZzV7UIKgbQ8dnA9mu6UHyKmIZEvxJdtEDHE8ziqZUX18eGn6yTZe0xU2mH9SUmNQzN6whG5o4/gGJGK6+ssiVRV5gEfACi4zorixyURZx3HenEXuERnrGNnYq9tkNIbIIVLbIEcdyCwqpDaqk3xtRcEixQPcyPtTAgzRv1/RNgPy2F6V/V/JnzXYGY7hW1xjAGxrDv6gtwOm2iNh+R9BKFduvo30yqpwJqONiab2Ryy+7KNtjmdMagdk7G8zONXNeM+ermdN5IXOO6L59ufv2xzWhXjihLj5cPnU/EIdPFdm+Cc7A6QE9HwHauSiLewOgaYKp3O/Kb/iW7opck+plRa0iW23I+FvLC7pxWz2lUtaKYJGiSF8MYuhZGujHfvUcDsxkiOMcRcbLykeC1sxTTWVbV61CmQiVEcGLgX6O8J13K7CFPfAqZ6w2WJzNq5bX2uBaG4zUBiyOcYh0aTBSGSzBzPb8mS1DfuRY/Wm/21Ox/3ytD975wD1fvHeBYH6Z+BAFwpsd8rwukbvmug3z/JLlgUH1FJhjgo4GZERNqtyEBBYyProol/RTp+eTMZfTmihyrOpaq5e1BVA0+FXsVfxb+I7Ba2QcEWnyx+70Y5jrFb4zLBdunpS43SjqB0fB9jxEelD717BX5gG9eQTkCRKDeUoHqG/6P/jE8OCPFfVQJAa+oVJVjzxLLlxXiccQZE2ajej0km0soP+lf71BDLvzbgzbQ6YcI0rnbBE8PEnljCtveqAsfFAVArAWltrmemGB6kvtpp9iWY5oIfve399OXMvzvKuxwdz5cHlx+Kt4E5yWREqUFv/fW871exzqj6Ra96KBOjyJP5tqcVa++tE2WB93wfKWtF/v7pgQLDNlZVCfCIx15VEpLv9UfaoWWxV59YpKeZw2FzE+KusFej+bVAj1bstKIQG2YUStGQ4ZjVWJy2ehXBFsIyjkkWyr5JJOtiwUpilrflcV8HLrUxv4s1ydXi7rFbY165dg3sAv5suREmF5LrdYDNwixhzFUA29hnEvjF1/+OjjjdKtvGxeeKpqqea1Mefmbw==</diagram></mxfile>
-</myxml>
-```
+# Port knocking + port forwarding
+
+##
+1. Реализована проброска порта nginx на машине centosmachine2 10.10.10.3:80 => 10.10.10.3:8080
+2. Реализован port knocking на хосте officemachine 192.168.1.102 на открытие поста 666 SSH
+3. Рализован простой firewall на хосте officemachine с политикой DROP на цепочку INPUT
+3. В получившейся сети реализован роутинг интернета через машину centos7machine1 10.10.10.1
+
+### Схема стенда
+![](https://github.com/Kerosin3/linux_hw/tree/main/network_filtering/pics/diagramm.png)
+
+# Запуск и проверка работы
+
+##
+1. Выполнить vagrant up, убедившись что на хост машине открыты 2050-2053 порты, подождать пока ансибл настроит хосты.
+2. На машине centos7machine2 в директории /home/vagrant/ лежать скрипты на открытие и закрытие портов на машине officemachine (knock_enable, knock disable)
+3. curl http://10.10.10.2:8080 для проверки доступа к проброшенному порту.
