@@ -82,6 +82,7 @@
       jump: ACCEPT
     become: yes
     run_once: true
+    when: 1 < 0
       #  - name: Allow related connections host1
       #ansible.builtin.iptables:
       #chain: INPUT
@@ -98,6 +99,7 @@
       jump: ACCEPT
     become: yes
     run_once: true
+    when: 1 < 0
   - name: Set the policy for the INPUT chain to DROP
     ansible.builtin.iptables:
       chain: INPUT
