@@ -1,0 +1,16 @@
+all:
+  hosts:
+      inetrouter:
+  children:
+    testnet:
+      hosts:
+        centos7machine1:
+        centos7machine2:
+        centos7machine3:
+        officemachine:
+  vars:
+    ansible_user: vagrant
+    ansible_host: 127.0.0.1
+    ansible_ssh_password: "vagrant"
+    ansible_ssh_pass: "vagrant"
+    ansible_ssh_private_key: '~/.ssh/id_rsa' 

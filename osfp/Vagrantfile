@@ -1,0 +1,146 @@
+# -*- mode: ruby -*-
+# vim: set ft=ruby :
+
+MACHINES = {
+:centos7machine1 => {
+        :box_name => "centos/7",
+        :box_version => "2004.01",
+        :hostname => "centos7machine1",
+        :ssh_port => 2050,
+        :os_type => "centos",
+        :ram => 1024,
+        :cpu => 2,
+        :net => [
+                   {ip: '10.10.10.1', adapter: 2, netmask: "255.255.255.248", virtualbox__intnet: "test-net"},
+                ]
+  },
+ :centos7machine2 => {
+        :box_name => "centos/7",
+        :box_version => "2004.01",
+        :hostname => "centos7machine2",
+        :ssh_port => 2051,
+        :os_type => "centos",
+        :port_nginx => 8082,
+        :port_nginx_server => 90,
+        :ram => 1024,
+        :cpu => 2,
+        :net => [
+                   {ip: '10.10.10.2', adapter: 2, netmask: "255.255.255.248", virtualbox__intnet: "test-net"},
+                   {ip: '192.168.1.101', adapter: 3, netmask: "255.255.255.248", virtualbox__intnet: "net_conn1"},
+                ]
+  },
+  :centos7machine3 => {
+        :box_name => "centos/7",
+        :box_version => "2004.01",
+        :hostname => "centos7machine3",
+        :os_type => "centos",
+        :ssh_port => 2052,
+        :ram => 1024,
+        :cpu => 2,
+        :port_nginx_3 => 8085,
+        :port_nginx_server => 80,
+        :net => [
+                  # {ip: '192.168.1.102', adapter: 2, netmask: "255.255.255.252", virtualbox__intnet: "test_conn1"},
+                   {ip: '10.10.10.3', adapter: 2, netmask: "255.255.255.248", virtualbox__intnet: "test-net"},
+                ]
+  },
+  :officemachine => {
+        :box_name => "ubuntu/focal64",
+        :os_type => "ubuntu",
+        :hostname => "officemachine",
+        :os_type => "ubuntu",
+        :ssh_port => 2053,
+        :ram => 1024,
+        :cpu => 2,
+        :net => [
+                   {ip: '192.168.1.102', adapter: 2, netmask: "255.255.255.248", virtualbox__intnet: "net_conn1"},
+                ]
+  },
+}
+
+Vagrant.configure("2") do |config|
+
+  MACHINES.each do |boxname, boxconfig|
+
+    config.vm.define boxname do |box|
+
+        box.vm.box = boxconfig[:box_name]
+        box.vm.box_version = boxconfig[:box_version]
+        box.vm.hostname = boxconfig[:hostname]
+        box.vbguest.auto_update = false
+        box.ssh.keys_only = true
+        box.ssh.insert_key = true
+        box.vm.network :forwarded_port,host:boxconfig[:ssh_port], guest:22,id:'ssh'
+        box.vm.provider "virtualbox" do |vb_machine_settings|
+                vb_machine_settings.customize ["modifyvm", :id, "--memory", boxconfig[:ram]]
+                vb_machine_settings.customize ["modifyvm", :id, "--cpus", boxconfig[:cpu]]
+            end
+
+        boxconfig[:net].each do |ipconf|
+          box.vm.network "private_network", ipconf
+        end
+        
+        if boxconfig.key?(:public)
+          box.vm.network "public_network", boxconfig[:public]
+        end
+
+#               
+        case boxconfig[:os_type]
+
+        when "centos" 
+        box.vm.provision "file", source: "~/.ssh/id_rsa.pub", destination: "/home/vagrant/.ssh/id_rsa.pub"
+        box.vm.provision :shell, :inline => "cat /home/vagrant/.ssh/id_rsa.pub >> /home/vagrant/.ssh/authorized_keys"
+        box.vm.provision :shell, :inline => "systemctl enable sshd"
+        box.vm.provision :shell, :inline => "systemctl start sshd"
+        box.vm.provision "shell", inline: <<-SHELL
+                mkdir -p ~root/.ssh
+                cp ~vagrant/.ssh/auth* ~root/.ssh
+        SHELL
+        
+        box.vm.provision "shell", inline: <<-SHELL
+                 yum update
+                 yum install epel-release centos-release-scl -y
+        SHELL
+
+
+        when "ubuntu"
+        box.vm.provision "shell", inline: <<-SHELL
+                apt update -y
+                apt install net-tools python-minimal sshpass -y
+                ssh-keygen -t rsa -N '' -f ~/.ssh/id_rsa <<< y
+        SHELL
+
+        end
+
+        case boxname.to_s
+
+        when "centos7machine1" 
+            box.vm.provision "ansible", run: "always" do |ansible|
+            ansible.playbook = "vm_config_machine1.yml"
+          end
+        when "centos7machine2" 
+            box.vm.provision "ansible", run: "always" do |ansible|
+            box.vm.network :forwarded_port,host:boxconfig[:port_nginx], guest:boxconfig[:port_nginx_server]
+            ansible.playbook = "vm_config_machine2.yml"
+          end
+         when "centos7machine3" 
+#            box.vm.network :forwarded_port,host:boxconfig[:port_nginx_3], guest:boxconfig[:port_nginx_server]
+            box.vm.provision "ansible", run: "always" do |ansible|
+            ansible.playbook = "vm_config_machine3.yml"
+          end
+         when "officemachine" 
+            box.vm.provision "ansible", run: "always" do |ansible|
+            ansible.playbook = "vm_config_machine_office.yml"
+          end
+        end
+        
+
+       end
+
+        
+
+      end
+
+  end
+  
+  
