@@ -5,64 +5,58 @@
   become: true
   vars:
     test_version: 1
-    installed_soft: ['git','mc','tcpdump','net-tools','nmap','nftables','bash-completion','most','zsh',]
+    installed_soft: ['git','mc','iproute','tcpdump','net-tools','nmap','nftables','bash-completion','bash-completion-extras','most','zsh','traceroute','iptables-services']
     os_env:
       - key: EDITOR
         value: vi
       - key: TERM
         value: xterm
-    desired_interface_name: ""
-
+ #------------------------------------------------------#
   tasks:
   - name: installing soft
-    ansible.builtin.package:
+    ansible.builtin.yum:
       name:
         - "{{ item }}"
       state: present
     loop: "{{ installed_soft  }}"
   - name: installing soft main
-    ansible.builtin.package:
+    ansible.builtin.yum:
       name: net-tools
       state: present
 ##########--------------------enabling services--------------------------############
-  - name: setting forwarding enable 
+  - name: setting forwarding enable centos
     ansible.posix.sysctl:
       name: net.ipv4.conf.all.forwarding
       value: '1'
       state: present
+  - name: enable iptables service
+    ansible.builtin.systemd:
+      name: iptables
+      state: started
+      enabled: yes
 #------------------------------------------------#
-
-  - name: parse interface to route
-    set_fact:
-      desired_interface_name="{{ item }}"
-    when: hostvars[inventory_hostname]['ansible_{{item}}']['ipv4']['address'] == "{{ ip_main }}"
-    with_items:
-      - "{{ ansible_interfaces }}"
-  - name: print default interface
-    debug:
-      var: desired_interface_name
-#------------------------------------------------#
-#  - name: insert route office1router
-#    ansible.builtin.blockinfile:
-#      dest: /etc/netplan/50-vagrant.yaml
-#      insertafter: "{{ ip_main }}"
-#      block: |6
-#                  dhcp4: yes
-#                  dhcp4-overrides:
-#                      use-routes: false
-#                  gateway4: "{{ gateway_def }}"
-#
+  - name: append pager vagrant
+    ansible.builtin.lineinfile:
+      dest: /home/vagrant/.bashrc
+      line: 'export PAGER="most"'
+    run_once: true
   - name: append pager root
     ansible.builtin.lineinfile:
       dest: /root/.bashrc
       line: 'export PAGER="most"'
     run_once: true
-#-------------------------------------------#
+  - name: turn on MASQUERADE
+    ansible.builtin.command: sudo iptables -t nat -A POSTROUTING ! -d 192.168.0.0/16 -o eth0 -j MASQUERADE
+    run_once: true
+#-----------------------------------------------------------#
+  - name: setting zsh shell for root
+    ansible.builtin.shell: usermod -s /bin/zsh root
+  - name: setting zsh shell for vagrant
+    ansible.builtin.shell: usermod -s /usr/bin/zsh vagrant
   - name: copy git zsh
     ansible.builtin.git:
       repo: https://github.com/blackden/zshrc.git
       dest: /root/zshrc
-      clone: yes  
     run_once: true
   - name: Copy file with owner and permissions
     ansible.builtin.copy:
@@ -109,12 +103,12 @@
       state: present
       regexp: "^{{ item.key }}="
       line: "{{ item.key }}={{ item.value }}"
-    with_items: "{{ os_env }}"  
-    ansible.builtin.shell: systemctl restart systemd-networkd
-  - name: restart sshd
-    ansible.builtin.shell: systemctl restart sshd
-
-
+    with_items: "{{ os_env }}"
+  - name: restart network
+    ansible.builtin.shell: systemctl restart network.service
+  - name: restart network2
+    ansible.builtin.shell: systemctl restart network.service
+ 
   handlers:
     - name: restart_crond
       service:
@@ -127,9 +121,5 @@
     - name: restart_sshd
       service:
         name=sshd
-        state=restarted
-    - name: restart_network
-      service:
-        name=network
         state=restarted
 
