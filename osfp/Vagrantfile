@@ -2,52 +2,48 @@
 # vim: set ft=ruby :
 
 MACHINES = {
-:centos7machine1 => {
-        :box_name => "centos/7",
-        :box_version => "2004.01",
-        :hostname => "centos7machine1",
-        :ssh_port => 2050,
-        :os_type => "centos",
-        :ram => 1024,
-        :cpu => 2,
-        :net => [
-                   {ip: '10.10.10.1', adapter: 2, netmask: "255.255.255.248", virtualbox__intnet: "test-net"},
-                ]
-  },
- :centos7machine2 => {
-        :box_name => "centos/7",
-        :box_version => "2004.01",
-        :hostname => "centos7machine2",
-        :ssh_port => 2051,
-        :os_type => "centos",
-        :port_nginx => 8082,
-        :port_nginx_server => 90,
-        :ram => 1024,
-        :cpu => 2,
-        :net => [
-                   {ip: '10.10.10.2', adapter: 2, netmask: "255.255.255.248", virtualbox__intnet: "test-net"},
-                   {ip: '192.168.1.101', adapter: 3, netmask: "255.255.255.248", virtualbox__intnet: "net_conn1"},
-                ]
-  },
-  :centos7machine3 => {
-        :box_name => "centos/7",
-        :box_version => "2004.01",
-        :hostname => "centos7machine3",
-        :os_type => "centos",
-        :ssh_port => 2052,
-        :ram => 1024,
-        :cpu => 2,
-        :port_nginx_3 => 8085,
-        :port_nginx_server => 80,
-        :net => [
-                  # {ip: '192.168.1.102', adapter: 2, netmask: "255.255.255.252", virtualbox__intnet: "test_conn1"},
-                   {ip: '10.10.10.3', adapter: 2, netmask: "255.255.255.248", virtualbox__intnet: "test-net"},
-                ]
-  },
-  :officemachine => {
+:machine1 => {
         :box_name => "ubuntu/focal64",
+        :hostname => "machine1",
+        :ssh_port => 2050,
         :os_type => "ubuntu",
-        :hostname => "officemachine",
+        :ram => 1024,
+        :cpu => 2,
+        :net => [
+                   {ip: '10.0.10.1', adapter: 2, netmask: "255.255.255.252", virtualbox__intnet: "net1"},
+                   {ip: '10.0.12.1', adapter: 3, netmask: "255.255.255.252", virtualbox__intnet: "net2"},
+                   {ip: '192.168.10.1', adapter: 4, netmask: "255.255.255.0", virtualbox__intnet: "net0"},
+                ]
+  },
+ :machine2 => {
+        :box_name => "ubuntu/focal64",
+        :hostname => "machine2",
+        :ssh_port => 2051,
+        :os_type => "ubuntu",
+        :ram => 1024,
+        :cpu => 2,
+        :net => [
+                   {ip: '10.0.10.2', adapter: 2, netmask: "255.255.255.252", virtualbox__intnet: "net1"},
+                   {ip: '192.168.20.1', adapter: 3, netmask: "255.255.255.0", virtualbox__intnet: "net_supp_2"},
+                   {ip: '10.0.11.2', adapter: 4, netmask: "255.255.255.252", virtualbox__intnet: "net3"},
+                ]
+  },
+  :machine3 => {
+        :box_name => "ubuntu/focal64",
+        :hostname => "machine3",
+        :ssh_port => 2052,
+        :os_type => "ubuntu",
+        :ram => 1024,
+        :cpu => 2,
+        :net => [
+                   {ip: '10.0.12.2', adapter: 2, netmask: "255.255.255.252", virtualbox__intnet: "net2"},
+                   {ip: '192.168.30.1', adapter: 3, netmask: "255.255.255.0", virtualbox__intnet: "net_supp_3"},
+                   {ip: '10.0.11.1', adapter: 4, netmask: "255.255.255.252", virtualbox__intnet: "net3"},
+                ]
+  },
+  :testmachine => {
+        :os_type => "ubuntu",
+        :hostname => "testmachine",
         :os_type => "ubuntu",
         :ssh_port => 2053,
         :ram => 1024,
@@ -114,21 +110,19 @@ Vagrant.configure("2") do |config|
 
         case boxname.to_s
 
-        when "centos7machine1" 
+        when "machine1" 
             box.vm.provision "ansible", run: "always" do |ansible|
             ansible.playbook = "vm_config_machine1.yml"
           end
-        when "centos7machine2" 
+        when "machine2" 
             box.vm.provision "ansible", run: "always" do |ansible|
-            box.vm.network :forwarded_port,host:boxconfig[:port_nginx], guest:boxconfig[:port_nginx_server]
             ansible.playbook = "vm_config_machine2.yml"
           end
-         when "centos7machine3" 
-#            box.vm.network :forwarded_port,host:boxconfig[:port_nginx_3], guest:boxconfig[:port_nginx_server]
+         when "machine3" 
             box.vm.provision "ansible", run: "always" do |ansible|
             ansible.playbook = "vm_config_machine3.yml"
           end
-         when "officemachine" 
+         when "testmachine" 
             box.vm.provision "ansible", run: "always" do |ansible|
             ansible.playbook = "vm_config_machine_office.yml"
           end

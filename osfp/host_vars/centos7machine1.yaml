@@ -1,6 +1,0 @@
-os_type: "centos"
-ansible_port: 2050
-nets: ["10.10.10.0/29","192.168.1.100/29"]
-ip_main: "10.10.10.1"
-gateway_def: "10.0.2.15"
-ip_to_route: ["192.168.1.100/29"]
