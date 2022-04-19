@@ -12,6 +12,8 @@
       - key: TERM
         value: xterm
     desired_interface_name: ""
+    interfaces: 
+      - default
 
   tasks:
   - name: installing soft
@@ -39,14 +41,24 @@
 #------------------------------------------------#
   - name: parse interface to route
     set_fact:
-      desired_interface_name="{{ item }}"
-    when: hostvars[inventory_hostname]['ansible_{{item}}']['ipv4']['address'] == "{{ ip_main }}"
-    with_items:
-      - "{{ ansible_interfaces }}"
+         interfaces_list: "{{ ansible_interfaces | select('match', '^(enp)[0-9]+') | sort | list }}"
+#  - name: parse interface to route
+#    set_fact:
+#        interfaces: "{{ interfaces | combine( { item: ansible_{{item}}.ipv4.address } ) }}"
+#    loop:
+#      - "{{ ansible_interfaces }}"
+        #  - debug:
+        #var: interfaces
+#  - name: parse interface to route
+#    set_fact:
+#      desired_interface_name="{{ item }}"
+#    when: hostvars[inventory_hostname]['ansible_{{item}}']['ipv4']['address'] == "{{ ip_main }}"
+#    with_items:
+#      - "{{ ansible_interfaces }}"
 #------------------------------------------------#
   - name: print default interface
     debug:
-      var: desired_interface_name
+      var: interfaces_list
 #------------------------------------------------#
 #  - name: insert route office1router
 #    ansible.builtin.blockinfile:

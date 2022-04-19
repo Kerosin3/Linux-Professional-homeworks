@@ -6,7 +6,7 @@ log syslog informational
 no ipv6 forwarding
 service integrated-vtysh-config
 ansible_interfaces
-{% for interface in {{ ansible_interfaces }} %}
+##{% for interface in {{ ansible_interfaces }} %}
 !add interface {{ interface }}
 !interface 
 ip adress 
