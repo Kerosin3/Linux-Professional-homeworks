@@ -5,143 +5,124 @@
   become: true
   vars:
     test_version: 1
-    installed_soft: ['git','mc','iproute','tcpdump','net-tools','nmap','nftables','bash-completion','bash-completion-extras','most','zsh','traceroute','iptables-services']
-    host_related: "10.10.10.3"
+    installed_soft: ['git','mc','tcpdump','net-tools','nmap','nftables','bash-completion','most','zsh','frr','frr-pythontools']
     os_env:
       - key: EDITOR
         value: vi
       - key: TERM
         value: xterm
-    iptables_revision: false
-
+    desired_interface_name: ""
+    interfaces: 
+      - default
+    test_dict: {}
+    temp: ""
+    netmaskz: {}
 
   tasks:
-  - name: setting forwarding enable centos
-    ansible.posix.sysctl:
-      name: net.ipv4.conf.all.forwarding
-      value: '1'
-      state: present
   - name: installing soft
-    ansible.builtin.yum:
+    ansible.builtin.package:
       name:
         - "{{ item }}"
       state: present
     loop: "{{ installed_soft  }}"
   - name: installing soft main
-    ansible.builtin.yum:
+    ansible.builtin.package:
       name: net-tools
       state: present
-  - name: add iptables autoload
-    shell: grep -c "^iptables-restore" /etc/rc.local || true
-    register: test_grep
-  - name: flush iptables
-    shell: iptables -F
-    when: test_grep.stdout == "0"    
-  - name: add iptables to rc.local 
-    lineinfile:
-      dest: /etc/rc.d/rc.local
-      mode: 1744
-      line: iptables-restore /etc/sysconfig/iptables_test_settings
-    when: test_grep.stdout == "0"    
-      #register: iptables_settings
+##########--------------------enabling services--------------------------############
+  - name: setting forwarding enable 
+    ansible.posix.sysctl:
+      name: net.ipv4.conf.all.forwarding
+      value: '1'
+      state: present
 #------------------------------------------------#
-#  - name: patching routes centralrouter
-#    ansible.builtin.template:
-#      src: ./settings/route_central.j2
-#      dest: /etc/sysconfig/network-scripts/route-eth1
-#     mode: 744
+  - name: disabling ufw 
+    ansible.builtin.systemd:
+      name: ufw
+      state: stopped
+      enabled: no
 #------------------------------------------------#
-  - name: copy knock_enable script
-    ansible.builtin.template:
-      src: ./settings/knock_enable.j2
-      dest: /home/vagrant/knock_enable.sh
-      mode: 1777
-  - name: copy knock_disable script
-    ansible.builtin.template:
-      src: ./settings/knock_disable.j2
-      dest: /home/vagrant/knock_disable.sh
-      mode: 1777
-  - name: append pager vagrant
-    ansible.builtin.lineinfile:
-      dest: /home/vagrant/.bashrc
-      line: 'export PAGER="most"'
-    run_once: true
+  - name: parse interface to route
+    set_fact:
+         interfaces_list: "{{ ansible_interfaces | select('match', '^(enp)[0-9]+') | sort | list }}"
+#------------------------------------------------#
+#------------------------------------------------#
+  - name: print interfaces
+    debug: msg="{{ interfaces_list }}"           
+#------------------------------------------------#
+  - name: create dict of interface-ip addressess
+    set_fact:
+      test_dict: "{{ test_dict | combine( { item: hostvars[inventory_hostname]['ansible_%s' | format(item)]['ipv4']['address']  }) }}"
+    with_items:
+      - "{{ interfaces_list }}"
+#------------------------------------------------#
+  - name: create dict of interface-netmask 
+    set_fact:
+      netmaskz: "{{ netmaskz | combine( { item: hostvars[inventory_hostname]['ansible_%s' | format(item)]['ipv4']['netmask']  }) }}"
+    with_items:
+      - "{{ interfaces_list }}"
+
+#------------------------------------------------#
+  - name: print interfaces ip's
+    debug: msg="{{ test_dict }}"
+  - name: print interfaces ip's
+    debug: msg="{{ netmaskz }}"
+
+#acess global hostvars
+  - name: ensure interfaces and ip's
+    debug:
+      msg: "{{ hostvars[inventory_hostname]['ansible_%s' | format(item)]['ipv4']['address'] }}"
+    with_items: "{{ interfaces_list }}"
+#------------------------------------------------#
+#  - name: parse interface to route
+#    set_fact:
+#        interfaces: "{{ interfaces | combine( { item: ansible_{{item}}.ipv4.address } ) }}"
+#    loop:
+#      - "{{ ansible_interfaces }}"
+        #  - debug:
+        #var: interfaces
+#  - name: parse interface to route
+#    set_fact:
+#      desired_interface_name="{{ item }}"
+#    when: hostvars[inventory_hostname]['ansible_{{item}}']['ipv4']['address'] == "{{ ip_main }}"
+#    with_items:
+#      - "{{ ansible_interfaces }}"
+#------------------------------------------------#
+#  - name: print default interface
+#    debug:
+#      var: interfaces_list
+#------------------------------------------------#
+#  - name: insert route office1router
+#    ansible.builtin.blockinfile:
+#      dest: /etc/netplan/50-vagrant.yaml
+#      insertafter: "{{ ip_main }}"
+#      block: |6
+#                  dhcp4: yes
+#                  dhcp4-overrides:
+#                      use-routes: false
+#                  gateway4: "{{ gateway_def }}"
+#
+#------------------------------------------------#
   - name: append pager root
     ansible.builtin.lineinfile:
       dest: /root/.bashrc
       line: 'export PAGER="most"'
     run_once: true
-  - name: Allow related and established connections
-    ansible.builtin.iptables:
-      chain: INPUT
-      match: conntrack
-      ctstate: ESTABLISHED,RELATED
-      jump: ACCEPT
-    become: yes
-  - name: open ssh
-    ansible.builtin.iptables:
-      chain: INPUT
-      protocol: tcp
-      ctstate: NEW
-      match: conntrack
-      destination_port: 22
-      jump: ACCEPT
-      comment: allow ssh
-    become: yes
-  - name: enable loopback
-    ansible.builtin.iptables:
-      chain: INPUT
-      in_interface: lo
-      jump: ACCEPT
-      comment: enable loopback
-    become: yes
-  - name: enable port forwaring from 10.10.10.3 to 8080 localhost (DNAT)
-    ansible.builtin.iptables:
-      table: nat
-      chain: PREROUTING
-      protocol: tcp
-      destination_port: 8080
-      action: append
-      jump: DNAT
-      to_destination: "10.10.10.3:80"
-      comment: redirect 
-    become: yes
-    run_once: true
-  - name: enable port forwaring from 10.10.10.3 to 8080 localhost (SNAT)
-    ansible.builtin.iptables:
-      table: nat
-      chain: POSTROUTING
-      protocol: tcp
-      destination: "{{ host_related }}"
-      destination_port: 80
-      action: append
-      jump: SNAT
-      to_source: "{{ ip_main }}"
-      comment: redirect 
-    become: yes
-    run_once: true
-  - name: saving iptables settings
-    ansible.builtin.shell: iptables-save > /etc/sysconfig/iptables_test_settings
-    when: test_grep.stdout == "0"    
-    register: chainzero
-      #  - name: start iptables persistent
-      #ansible.builtin.systemd:
-      #name: iptables
-      #state: started
-      #enabled: yes
-        #  - name: load iptables settings
-        #    ansible.builtin.shell: iptables-restore /etc/sysconfig/iptables_test_settings
-        #    when: test_grep.stdout == "0"    
+#-------------------------------------------#
+  - name: setting frr
+    ansible.builtin.template:
+      src: ./settings/frr.j2
+      dest: /etc/frr/frr.conf
+      mode: 0640
+      owner: frr
+      group: frr
+#-------------------------------------------#
   - name: copy git zsh
     ansible.builtin.git:
       repo: https://github.com/blackden/zshrc.git
       dest: /root/zshrc
+      clone: yes  
     run_once: true
-  - name: patching default gateway
-    ansible.builtin.template:
-      src: ./settings/internet_machine2.j2
-      dest: /etc/sysconfig/network
-      mode: 744
   - name: Copy file with owner and permissions
     ansible.builtin.copy:
       src: "{{ item.0 }}"
@@ -181,6 +162,7 @@
       state: present
     notify: restart_sshd
     run_once: true
+#-------------------------------------------------------
   - name: customize /etc/environment
     ansible.builtin.lineinfile:
       dest: "/etc/environment"
@@ -188,16 +170,29 @@
       regexp: "^{{ item.key }}="
       line: "{{ item.key }}={{ item.value }}"
     with_items: "{{ os_env }}"  
-  - name: set default gateway 10.10.10.1
+#----------------------------------------------------------------
+  - name: Configure ospf
     ansible.builtin.lineinfile:
-      dest: /etc/sysconfig/network-scripts/ifcfg-eth0
-      line: GATEWAY={{ gateway_def }}
+      path: "/etc/frr/daemons"
+      regex: "^{{item.key}}"
+      line: "{{item.key}}={{item.value}}"
       state: present
+    loop:
+      - { key: "ospfd", value: "yes" }
+  - name: enable zebra
+    ansible.builtin.lineinfile:
+      path: "/etc/frr/daemons"
+      insertafter: 'ospfd=yes'
+      line: "zebra=yes"
+#----------------------------------------------------------------
   - name: restart network
-    ansible.builtin.shell: systemctl restart network.service
-  - name: restart network2
-    ansible.builtin.shell: systemctl restart network.service
-  
+    ansible.builtin.shell: systemctl restart systemd-networkd
+  - name: restart sshd
+    ansible.builtin.shell: systemctl restart sshd
+  - name: restart frr
+    ansible.builtin.shell: systemctl restart frr
+
+
   handlers:
     - name: restart_crond
       service:

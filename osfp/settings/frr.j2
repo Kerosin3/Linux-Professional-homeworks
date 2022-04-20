@@ -5,12 +5,25 @@ hostname router1
 log syslog informational
 no ipv6 forwarding
 service integrated-vtysh-config
-ansible_interfaces
-##{% for interface in {{ ansible_interfaces }} %}
-!add interface {{ interface }}
-!interface 
-ip adress 
-ip ospf cost 
-ip ospf hello-interval 10
-ip ospf dead-interval 30
+{% for interface in test_dict|dict2items %}
+!------------------------------------------------
+{% set i_face = interface.key %}
+interface {{ interface.key }}
+!description 
+ip address {{ interface.value }} {{ netmaskz[interface.key] }}
+ip ospf mtu-ignore
+!ip ospf cost 
+!ip ospf hello-interval 10
+!ip ospf dead-interval 30
+{% endfor %}
+!------------------------------------------------
+router ospf
+router-id {{ router_id }}
+{% for interface in test_dict|dict2items %}
+network {{ interface.value }} {{ netmaskz[interface.key] }} area 0
+{% endfor %}
+! neighbors
+{% for neighbor in neighbors %}
+!------------------------------------------------
+neighbor {{ neighbor }}
 {% endfor %}
