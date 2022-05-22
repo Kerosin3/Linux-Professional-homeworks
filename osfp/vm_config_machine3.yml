@@ -16,13 +16,13 @@
 
   tasks:
   - name: installing soft
-    ansible.builtin.yum:
+    ansible.builtin.package:
       name:
         - "{{ item }}"
       state: present
     loop: "{{ installed_soft  }}"
   - name: installing soft main
-    ansible.builtin.yum:
+    ansible.builtin.package:
       name: net-tools
       state: present
 ##########--------------------enabling services--------------------------############

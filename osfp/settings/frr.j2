@@ -1,7 +1,7 @@
 ! frr version
 frr version 8.1.1
 frr defaults traditional
-hostname router1
+hostname {{ router_name }}
 log syslog informational
 no ipv6 forwarding
 service integrated-vtysh-config
@@ -27,3 +27,5 @@ network {{ interface.value }} {{ netmaskz[interface.key] }} area 0
 !------------------------------------------------
 neighbor {{ neighbor }}
 {% endfor %}
+log file /var/log/frr/frr.log
+default-information originate always
