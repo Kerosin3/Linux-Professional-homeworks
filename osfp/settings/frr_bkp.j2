@@ -9,21 +9,18 @@ service integrated-vtysh-config
 !------------------------------------------------
 {% set i_face = interface.key %}
 interface {{ interface.key }}
-{% set route_name = [router_name, loop.index ]|join('_') %}
-description {{ route_name }}
-{% set net_mask = [interface.value, netmaskz[interface.key] ]|join('/') %}
-ip address {{ net_mask | ansible.netcommon.ipaddr('network/prefix') }}
+!description 
+ip address {{ interface.value }} {{ netmaskz[interface.key] }}
 ip ospf mtu-ignore
-!ip ospf cost  
-ip ospf hello-interval 10
-ip ospf dead-interval 30
+!ip ospf cost 
+!ip ospf hello-interval 10
+!ip ospf dead-interval 30
 {% endfor %}
 !------------------------------------------------
 router ospf
 router-id {{ router_id }}
 {% for interface in test_dict|dict2items %}
-{% set net_mask2 = [interface.value, netmaskz[interface.key] ]|join('/') %}
-network {{ net_mask2 | ansible.netcommon.ipaddr('network/prefix') }} area 0
+network {{ interface.value }} {{ netmaskz[interface.key] }} area 0
 {% endfor %}
 ! neighbors
 {% for neighbor in neighbors %}
@@ -31,4 +28,4 @@ network {{ net_mask2 | ansible.netcommon.ipaddr('network/prefix') }} area 0
 neighbor {{ neighbor }}
 {% endfor %}
 log file /var/log/frr/frr.log
-!default-information originate always
+default-information originate always

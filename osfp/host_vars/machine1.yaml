@@ -3,6 +3,9 @@ router_name: "router1"
 ansible_port: 2050
 nets: ["10.0.12.1/30","10.0.10.1/30","192.168.10.1/24"]
 nets_ip: ["10.0.12.1","10.0.10.1","192.168.10.1"]
+  #net1: {net:"10.0.12.1",netmask:"30"}
+  #net2: {net:"10.0.10.1",netmask:"30"}
+  #net2: {net:"192.168.10.1",netmask:"24"}
 gateway_def: "10.0.2.15"
 ip_main: "192.168.10.1"
 router_id: "1.1.1.1"

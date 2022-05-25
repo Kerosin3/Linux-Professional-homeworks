@@ -58,7 +58,7 @@
 #------------------------------------------------#
   - name: create dict of interface-netmask 
     set_fact:
-      netmaskz: "{{ netmaskz | combine( { item: hostvars[inventory_hostname]['ansible_%s' | format(item)]['ipv4']['netmask']  }) }}"
+      netmaskz: "{{ netmaskz | combine( { item: hostvars[inventory_hostname]['ansible_%s' | format(item)]['ipv4']['netmask'] }) }}"
     with_items:
       - "{{ interfaces_list }}"
 
