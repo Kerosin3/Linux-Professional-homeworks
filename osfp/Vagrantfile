@@ -41,17 +41,17 @@ MACHINES = {
                    {ip: '10.0.11.1', adapter: 4, netmask: "255.255.255.252", virtualbox__intnet: "net3"},
                 ]
   },
-  :testmachine => {
-        :os_type => "ubuntu",
-        :hostname => "testmachine",
-        :os_type => "ubuntu",
-        :ssh_port => 2053,
-        :ram => 1024,
-        :cpu => 2,
-        :net => [
-                   {ip: '192.168.1.102', adapter: 2, netmask: "255.255.255.248", virtualbox__intnet: "net_conn1"},
-                ]
-  },
+#  :testmachine => {
+#        :os_type => "ubuntu",
+#        :hostname => "testmachine",
+#        :os_type => "ubuntu",
+#        :ssh_port => 2053,
+#        :ram => 1024,
+#        :cpu => 2,
+#        :net => [
+#                   {ip: '192.168.1.102', adapter: 2, netmask: "255.255.255.248", virtualbox__intnet: "net_conn1"},
+#                ]
+#  },
 }
 
 Vagrant.configure("2") do |config|
