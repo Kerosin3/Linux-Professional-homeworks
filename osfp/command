@@ -1,0 +1,1 @@
+ansible-playbook -i ansible_config/hosts.yaml -l machine1 vm_config_machine1.yml -t enable_assymetric -e "ansible_host_key_checking==false"

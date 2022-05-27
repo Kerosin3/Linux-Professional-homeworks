@@ -17,6 +17,7 @@
     test_dict: {}
     temp: ""
     netmaskz: {}
+    assymetric: false
 
   tasks:
   - name: installing soft
@@ -45,6 +46,12 @@
   - name: parse interface to route
     set_fact:
          interfaces_list: "{{ ansible_interfaces | select('match', '^(enp)[0-9]+') | sort | list }}"
+#------------------------------------------------#
+  - name: parse interface to route 
+    set_fact:
+         interfaces_list: "{{ ansible_interfaces | select('match', '^(enp)[0-9]+') | sort | list }}"
+    tags:
+      - enable_assymetric
 #------------------------------------------------#
 #------------------------------------------------#
   - name: print interfaces
@@ -117,6 +124,38 @@
       owner: frr
       group: frr
       force: yes
+#-------------------------------------------#
+#------------------------------------------------#
+  - name: create dict of interface-ip addressess
+    set_fact:
+      test_dict: "{{ test_dict | combine( { item: hostvars[inventory_hostname]['ansible_%s' | format(item)]['ipv4']['address']  }) }}"
+    with_items:
+      - "{{ interfaces_list }}"
+    tags:
+      - enable_assymetric
+#------------------------------------------------#
+  - name: create dict of interface-netmask 
+    set_fact:
+      netmaskz: "{{ netmaskz | combine( { item: hostvars[inventory_hostname]['ansible_%s' | format(item)]['ipv4']['netmask'] }) }}"
+    with_items:
+      - "{{ interfaces_list }}"
+    tags:
+    - enable_assymetric
+  - name: set assymetric
+    set_fact:
+      assymetric: true
+    tags:
+      - enable_assymetric
+  - name: setting frr assymetric routing
+    ansible.builtin.template:
+      src: ./settings/frr.j2
+      dest: /etc/frr/frr.conf
+      mode: 0640
+      owner: frr
+      group: frr
+      force: yes
+    tags:
+      - enable_assymetric
 #-------------------------------------------#
   - name: copy git zsh
     ansible.builtin.git:

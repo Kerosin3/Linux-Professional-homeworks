@@ -14,7 +14,11 @@ description {{ route_name }}
 {% set net_mask = [interface.value, netmaskz[interface.key] ]|join('/') %}
 ip address {{ net_mask | ansible.netcommon.ipaddr('network/prefix') }}
 ip ospf mtu-ignore
-!ip ospf cost  
+{% if assymetric == true and ansible_hostname == 'machine1' and interface.value == '10.0.10.1' %}
+ip ospf cost 1000
+{% else %}
+!ip ospf cost 450
+{% endif %}
 ip ospf hello-interval 10
 ip ospf dead-interval 30
 {% endfor %}
