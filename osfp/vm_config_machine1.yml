@@ -17,7 +17,7 @@
     test_dict: {}
     temp: ""
     netmaskz: {}
-    assymetric: false
+    assymetric: true
 
   tasks:
   - name: installing soft
@@ -35,6 +35,12 @@
     ansible.posix.sysctl:
       name: net.ipv4.conf.all.forwarding
       value: '1'
+      state: present
+#------------------------------------------------#
+  - name: setting disable rp_filter
+    ansible.posix.sysctl:
+      name: net.ipv4.conf.all.rp_filter
+      value: '0'
       state: present
 #------------------------------------------------#
   - name: disabling ufw 
@@ -140,12 +146,12 @@
     with_items:
       - "{{ interfaces_list }}"
     tags:
-    - enable_assymetric
-  - name: set assymetric
-    set_fact:
-      assymetric: true
-    tags:
       - enable_assymetric
+        #  - name: set assymetric
+        #    set_fact:
+        #      assymetric: true
+        #    tags:
+        #      - enable_assymetric
   - name: setting frr assymetric routing
     ansible.builtin.template:
       src: ./settings/frr.j2

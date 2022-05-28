@@ -17,6 +17,7 @@
     test_dict: {}
     temp: ""
     netmaskz: {}
+    assymetric: false
 
   tasks:
   - name: installing soft
@@ -36,6 +37,13 @@
       value: '1'
       state: present
 #------------------------------------------------#
+  - name: setting disable rp_filter
+    ansible.posix.sysctl:
+      name: net.ipv4.conf.all.rp_filter
+      value: '0'
+      state: present
+#------------------------------------------------#
+
   - name: disabling ufw 
     ansible.builtin.systemd:
       name: ufw

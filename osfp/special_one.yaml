@@ -1,0 +1,21 @@
+---
+- name: special_one
+  hosts: 
+    machine2
+    machine1
+    machine3
+  gather_facts: true
+  become: true
+
+  tasks:
+  - name: setting enable rp_filter
+    ansible.posix.sysctl:
+      name: net.ipv4.conf.all.rp_filter
+      value: '0'
+      state: present
+#------------------------------------------------#
+  - name: restart frr
+    ansible.builtin.shell: systemctl restart frr
+
+
+
