@@ -9,8 +9,6 @@
 1. Реализован OSPF между тремя хостами
 2. Реализован симметричный роутинг
 2. Реализован ассимметричный роутинг
-3. Рализован простой firewall на хосте officemachine с политикой DROP на цепочку INPUT
-3. В получившейся сети реализован роутинг интернета через машину centos7machine1 10.10.10.1
 
 ### Схема стенда
 ![](https://github.com/Kerosin3/linux_hw/blob/main/ospf/pics/ospf.jpg)
@@ -23,7 +21,6 @@
 3. Для проверки ассиметричного роутинга использовать команды tcpdump -i enp0s8 icmp и tcpdump -i enp0s10 icmp на хосте machine2, наблюдать ассиметричный роутинг пакетов, установлено rp_filter = 0
 4. Для иммитации симметричного роутинга выполнить команду  ansible-playbook -i ansible_config/hosts.yaml special_one.yaml ( устанавливает на хостах 1 и 2 rp_filter = 1 )
 5. Для проверки иммитации использовать команду tcpdump -i enp0s10 icpm
-*
 
 # Выполнение работы
 
@@ -39,5 +36,6 @@
 ![](https://github.com/Kerosin3/linux_hw/blob/main/ospf/pics/asym1.png)
 
 ## Имитация симметричного роутинга
-<u>После установки rp_filter = 1 пакеты от machine 1 идет на machine2 через machine3, однако обратно они так же идут через machine3, симметрия достигнута.</u>
+<u>После установки rp_filter = 1 пакеты от machine 1 идут на machine2 через machine3, однако обратно они так же идут через machine3, симметрия достигнута.</u>
+
 ![](https://github.com/Kerosin3/linux_hw/blob/main/ospf/pics/symm.png)
