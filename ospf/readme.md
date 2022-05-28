@@ -25,21 +25,19 @@
 5. Для проверки иммитации использовать команду tcpdump -i enp0s10 icpm
 *
 
-##
-Наличие поднятой OSPF
-###
-Пинг с machine1 до machine2 работает, ospf поднят.
+# Выполнение работы
+
+## Наличие поднятой OSPF
+
+<u>Пинг с machine1 до machine2 работает, ospf поднят. </u>
 ![](https://github.com/Kerosin3/linux_hw/blob/main/ospf/pics/ospf.png)
 ![](https://github.com/Kerosin3/linux_hw/blob/main/ospf/pics/main.png)
 
-##
-Иммитация ассиметричного роутинга
-###
-Пакеты с хоста machine1 идут через machine3 на machine2, ответы идут непосредственно к machine1, ассиметрия достигнута.
+## Иммитация ассиметричного роутинга
+
+<u>Пакеты с хоста machine1 идут через machine3 на machine2, ответы идут непосредственно к machine1, ассиметрия достигнута.</u>
 ![](https://github.com/Kerosin3/linux_hw/blob/main/ospf/pics/asym1.png)
 
-##
-Имитация симметричного роутинга
-###
-После установки rp_filter = 1 пакеты от machine 1 идет на machine2 через machine3, однако обратно они так же идут через machine3, симметрия достигнута.
+## Имитация симметричного роутинга
+<u>После установки rp_filter = 1 пакеты от machine 1 идет на machine2 через machine3, однако обратно они так же идут через machine3, симметрия достигнута.</u>
 ![](https://github.com/Kerosin3/linux_hw/blob/main/ospf/pics/symm.png)
