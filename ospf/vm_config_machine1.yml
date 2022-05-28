@@ -17,7 +17,7 @@
     test_dict: {}
     temp: ""
     netmaskz: {}
-    assymetric: true
+    assymetric: false
 
   tasks:
   - name: installing soft
