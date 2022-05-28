@@ -18,9 +18,11 @@
 ##
 1. Выполнить vagrant up, убедившись что на хост машине открыты 2050-2052 порты, <u>установлен пакет netaddr (pip install netaddr)</u>, подождать пока ансибл настроит хосты, осуществить проверку с помощью команд systemctl status frr и ip -c a
 2. Для иммитации ассиметричного роутинга установить переменную assymetric: true в файле vm_config_machine1.yml на 20 строчке, выполнить команду vagrant reload machine1
-3. Для проверки ассиметричного роутинга использовать команды tcpdump -i enp0s8 icmp и tcpdump -i enp0s10 icmp на хосте machine2, наблюдать ассиметричный роутинг пакетов, установлено rp_filter = 0
-4. Для иммитации симметричного роутинга выполнить команду  ansible-playbook -i ansible_config/hosts.yaml special_one.yaml ( устанавливает на хостах 1 и 2 rp_filter = 1 )
-5. Для проверки иммитации использовать команду tcpdump -i enp0s10 icpm
+3. Для проверки ассиметричного роутинга использовать команды tcpdump -i enp0s8 icmp и tcpdump -i enp0s10 icmp на хосте machine2, наблюдать ассиметричный роутинг пакетов, установлено ( rp_filter = 0 )
+4. Для иммитации симметричного роутинга выполнить команду  ansible-playbook -i ansible_config/hosts.yaml special_one.yaml ( устанавливает на хостах 1 и 2 rp_filter = 1 ) либо установить sysctl
+net.ipv4.conf.all.rp_filter=1 вручную
+5. Для проверки иммитации симметричного роутинга использовать команду tcpdump -i enp0s10 icpm
+
 
 # Выполнение работы
 

@@ -3,7 +3,6 @@
   hosts: 
     machine2
     machine1
-    machine3
   gather_facts: true
   become: true
 
@@ -11,7 +10,7 @@
   - name: setting enable rp_filter
     ansible.posix.sysctl:
       name: net.ipv4.conf.all.rp_filter
-      value: '0'
+      value: '1'
       state: present
 #------------------------------------------------#
   - name: restart frr
