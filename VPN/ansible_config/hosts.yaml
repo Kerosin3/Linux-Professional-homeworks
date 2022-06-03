@@ -1,11 +1,29 @@
----
-ungrouped:
+server_hosts:
   hosts:
-        server:
+    server1:
   vars:
-    ansible_user: vagrant
-    ansible_host: 127.0.0.1
-    ansible_ssh_password: "vagrant"
-    ansible_ssh_pass: "vagrant"
-    ansible_ssh_private_key: '~/.ssh/id_rsa' 
-    ansible_host_key_checking: false
+    host_group: "servers"
+    ansible_ssh_private_key_file: ".vagrant/machines/server1/virtualbox/private_key"
+clients:
+  hosts:
+    server2:
+  vars:
+    host_group: "clients"
+    ansible_ssh_private_key_file: ".vagrant/machines/server2/virtualbox/private_key"
+  children:
+    test_machines:
+      test_machine:
+all:
+  vars:
+      commontoall: thisvar
+      anothercommontoall: thisvar
+      ansible_user: vagrant
+      ansible_host: 127.0.0.1
+      ansible_ssh_password: "vagrant"
+      ansible_ssh_pass: "vagrant"
+      ansible_ssh_private_key: '~/.ssh/id_rsa' 
+      ansible_host_key_checking: false
+      ansible_ssh_path_main0: "./vagrant/machines/"
+      ansible_ssh_path_main1: "/virtualbox/private_key"
+
+
