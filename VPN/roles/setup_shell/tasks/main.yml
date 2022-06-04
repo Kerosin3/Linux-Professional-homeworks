@@ -1,0 +1,45 @@
+---
+# tasks file for setup_shell
+  - name: append pager root
+    ansible.builtin.lineinfile:
+      dest: /root/.bashrc
+      line: 'export PAGER="most"'
+  - name: copy git zsh
+    ansible.builtin.git:
+      repo: https://github.com/blackden/zshrc.git
+      dest: /root/zshrc
+      clone: yes  
+  - name: Copy file with owner and permissions
+    ansible.builtin.copy:
+      src: "{{ item.0 }}"
+      dest: "{{ item.1 }}"
+      remote_src: yes
+      owner: root
+      group: root
+      mode: '0744'
+    with_together:
+      - ['/root/zshrc/zshrc','/root/zshrc/zshrc.pre']
+      - ['/root/.zshrc','/root/.zshrc.pre']
+  - name: copy zsh settings
+    ansible.builtin.copy:
+      src: "{{ item }}"
+      dest: "/home/vagrant/"
+      owner: root
+      remote_src: yes
+      group: vagrant
+      mode: '0764'
+    loop:
+      - /root/.zshrc
+      - /root/.zshrc.pre
+  - name: change shell for root
+    ansible.builtin.shell: usermod -s /bin/zsh root
+  - name: change shell for user
+    ansible.builtin.shell: usermod -s /usr/bin/zsh vagrant
+  - name: customize /etc/environment
+    ansible.builtin.lineinfile:
+      dest: "/etc/environment"
+      state: present
+      regexp: "^{{ item.key }}="
+      line: "{{ item.key }}={{ item.value }}"
+    with_items: "{{ os_env }}"  
+

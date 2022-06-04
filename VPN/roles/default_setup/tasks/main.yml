@@ -1,0 +1,8 @@
+---
+- name: installing soft
+  ansible.builtin.package:
+    name:
+      - "{{ item }}"
+    state: present
+  loop: "{{ installed_soft  }}"
+

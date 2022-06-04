@@ -1,0 +1,8 @@
+---
+- name: server2 configuration
+  hosts: server2
+  become: yes
+  roles:
+    - default_setup
+    - setup_network_kernel
+    - setup_shell

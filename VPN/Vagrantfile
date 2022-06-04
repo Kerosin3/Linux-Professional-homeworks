@@ -84,13 +84,18 @@ Vagrant.configure("2") do |config|
         #box.vm.provision "ansible" do |ansible|
         #  ansible.playbook = "main.yaml"
         #end
+        case boxname.to_s
 
-
-        
-
-       end
-
-        
+        when "server1" 
+            box.vm.provision "ansible", run: "always" do |ansible|
+            ansible.playbook = "setup_server1.yaml"
+          end
+        when "server2" 
+            box.vm.provision "ansible", run: "always" do |ansible|
+            ansible.playbook = "setup_server2.yaml"
+          end
+        end
+        end        
 
       end
 
