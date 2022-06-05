@@ -1,0 +1,11 @@
+---
+- name: server configuration
+  hosts: server
+  become: yes
+  roles:
+    - default_setup
+    - setup_network_kernel
+    - setup_shell
+    - install_openvpn
+    - copy_keys_to_server
+    - setup_server_openvpn

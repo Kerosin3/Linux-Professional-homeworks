@@ -2,28 +2,53 @@
 # vim: set ft=ruby :
 
 MACHINES = {
-:server1 => {
+:server => {
         :box_name => "centos/7",
-        :hostname => "server1",
+        :hostname => "server",
         :os_type => "centos",
         :ssh_port => 2200,
         :ram => 1024,
         :cpu => 2,
         :net => [
-                   {ip: '192.168.10.11', adapter: 4, netmask: "255.255.255.0", virtualbox__intnet: "net0"},
+          {ip: '10.0.0.10', adapter: 2, netmask: "255.255.255.0", virtualbox__intnet: "net0"},
+          {ip: '172.16.1.1', adapter: 3, netmask: "255.255.255.0", virtualbox__intnet: "netps"},
                 ]
         }       ,
-:server2 => {
+:client => {
         :box_name => "centos/7",
-        :hostname => "server2",
+        :hostname => "client",
         :os_type => "centos",
         :ssh_port => 2201,
         :ram => 1024,
         :cpu => 2,
         :net => [
-                   {ip: '192.168.10.12', adapter: 4, netmask: "255.255.255.0", virtualbox__intnet: "net0"},
+          {ip: '10.0.0.20', adapter: 2, netmask: "255.255.255.0", virtualbox__intnet: "net0"},
+          {ip: '172.16.2.1', adapter: 3, netmask: "255.255.255.0", virtualbox__intnet: "netsp"},
                 ]
         }       ,
+:pc1=> {
+        :box_name => "centos/7",
+        :hostname => "pc1",
+        :os_type => "centos",
+        :ssh_port => 2202,
+        :ram => 1024,
+        :cpu => 2,
+        :net => [
+          {ip: '172.16.1.2', adapter: 2, netmask: "255.255.255.0", virtualbox__intnet: "netps"},
+                ]
+        }       ,
+:pc2=> {
+        :box_name => "centos/7",
+        :hostname => "pc2",
+        :os_type => "centos",
+        :ssh_port => 2203,
+        :ram => 1024,
+        :cpu => 2,
+        :net => [
+          {ip: '172.16.2.2', adapter: 2, netmask: "255.255.255.0", virtualbox__intnet: "netsp"},
+                ]
+        }       ,
+
 
 }
 
@@ -86,14 +111,23 @@ Vagrant.configure("2") do |config|
         #end
         case boxname.to_s
 
-        when "server1" 
+        when "server" 
             box.vm.provision "ansible", run: "always" do |ansible|
-            ansible.playbook = "setup_server1.yaml"
+            ansible.playbook = "setup_server.yaml"
           end
-        when "server2" 
+        when "client" 
             box.vm.provision "ansible", run: "always" do |ansible|
-            ansible.playbook = "setup_server2.yaml"
+            ansible.playbook = "setup_client.yaml"
           end
+        when "pc1" 
+            box.vm.provision "ansible", run: "always" do |ansible|
+            ansible.playbook = "setup_pc1.yaml"
+          end
+        when "pc2" 
+            box.vm.provision "ansible", run: "always" do |ansible|
+            ansible.playbook = "setup_pc2.yaml"
+          end
+
         end
         end        
 

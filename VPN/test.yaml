@@ -1,7 +1,7 @@
 ---
 - name: Init default setup on server
-  hosts: all
+  hosts: server
   become: yes
 
   roles:
-    - setup_shell
+    - copy_keys_client

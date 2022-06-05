@@ -1,6 +1,6 @@
 ---
-- name: server1 configuration
-  hosts: server1
+- name: client configuration
+  hosts: pc1
   become: yes
   roles:
     - default_setup

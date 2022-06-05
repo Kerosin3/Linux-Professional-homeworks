@@ -5,4 +5,6 @@
       - "{{ item }}"
     state: present
   loop: "{{ installed_soft  }}"
-
+- name: Disable SELinux
+  ansible.posix.selinux:
+    state: disabled

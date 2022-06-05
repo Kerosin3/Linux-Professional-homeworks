@@ -1,0 +1,11 @@
+---
+- name: client configuration
+  hosts: client
+  become: yes
+  roles:
+    - default_setup
+    - setup_network_kernel
+    - setup_shell
+    - install_openvpn
+      #    - copy_keys_to_client
+    - setup_client_openvpn

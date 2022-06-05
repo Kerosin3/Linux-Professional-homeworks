@@ -1,6 +1,6 @@
 ---
 # vars file for default_setup
-installed_soft: ['git','mc','tcpdump','net-tools','nmap','nftables','bash-completion','most','zsh']
+installed_soft: ['git','mc','tcpdump','net-tools','nmap','nftables','bash-completion','most','zsh','nnn','openvpn','mtr']
 os_env:
 - key: EDITOR
   value: vi

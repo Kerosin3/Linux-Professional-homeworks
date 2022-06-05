@@ -1,18 +1,28 @@
 server_hosts:
   hosts:
-    server1:
+    server:
+      ansible_port: 2200
+      ansible_ssh_private_key_file: ".vagrant/machines/server/virtualbox/private_key"
   vars:
     host_group: "servers"
-    ansible_ssh_private_key_file: ".vagrant/machines/server1/virtualbox/private_key"
 clients:
   hosts:
-    server2:
+    client:
+      ansible_port: 2201
+      ansible_ssh_private_key_file: ".vagrant/machines/client/virtualbox/private_key"
   vars:
     host_group: "clients"
-    ansible_ssh_private_key_file: ".vagrant/machines/server2/virtualbox/private_key"
-  children:
-    test_machines:
-      test_machine:
+pcs:
+  hosts:
+    pc1:
+      ansible_port: 2202
+      ansible_ssh_private_key_file: ".vagrant/machines/pc1/virtualbox/private_key"
+    pc2:
+      ansible_port: 2203
+      ansible_ssh_private_key_file: ".vagrant/machines/pc2/virtualbox/private_key"
+    #  children:
+    #test_machine:
+    # test_machine:
 all:
   vars:
       commontoall: thisvar
