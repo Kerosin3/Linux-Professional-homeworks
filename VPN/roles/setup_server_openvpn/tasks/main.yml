@@ -27,12 +27,19 @@
     group: root
     mode: '0644'
     state: touch
-- name: create files for logging 3
+- name: create files for client setup
   ansible.builtin.file:
     path: /etc/openvpn/ccd
     owner: root
     group: root
     state: directory
+- name: copy client1 conf
+  ansible.builtin.copy:
+    src: client1.conf
+    dest: /etc/openvpn/ccd/client1
+    owner: root
+    group: root
+    mode: '0644'
 - name: start service openvpn
   ansible.builtin.systemd:
     name: openvpn@server
