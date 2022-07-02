@@ -6,7 +6,7 @@
       line: 'export PAGER="most"'
   - name: copy git zsh
     ansible.builtin.git:
-      repo: https://github.com/Kerosi3/zshrc.git
+      repo: https://github.com/Kerosin3/zshrc.git
       dest: /root/zshrc
       clone: yes  
   - name: Copy file with owner and permissions

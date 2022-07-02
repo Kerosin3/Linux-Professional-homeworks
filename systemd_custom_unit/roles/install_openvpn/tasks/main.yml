@@ -1,0 +1,11 @@
+---
+# tasks file for install_openvpn
+- name: install open vpn
+  ansible.builtin.package:
+    name: openvpn
+    state: present
+
+    #- name: enable openvpn service
+    #  ansible.builtin.shell: systemctl enable openvpn@server.service --now
+
+  

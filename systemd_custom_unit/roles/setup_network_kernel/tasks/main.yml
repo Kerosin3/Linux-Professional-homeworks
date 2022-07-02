@@ -1,0 +1,17 @@
+---
+# tasks file for setup_network_kernel
+##########--------------------enabling services--------------------------############
+  - name: setting forwarding enable 
+    ansible.posix.sysctl:
+      name: net.ipv4.conf.all.forwarding
+      value: '1'
+      state: present
+#------------------------------------------------#
+  - name: setting disable rp_filter
+    ansible.posix.sysctl:
+      name: net.ipv4.conf.all.rp_filter
+      value: '0'
+      state: present
+    notify: restart_network
+#------------------------------------------------#
+

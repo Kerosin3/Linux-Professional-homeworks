@@ -1,0 +1,10 @@
+---
+- name: installing soft
+  ansible.builtin.package:
+    name:
+      - "{{ item }}"
+    state: present
+  loop: "{{ installed_soft  }}"
+- name: Disable SELinux
+  ansible.posix.selinux:
+    state: disabled

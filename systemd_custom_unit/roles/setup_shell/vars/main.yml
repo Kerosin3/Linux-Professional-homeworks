@@ -1,0 +1,7 @@
+---
+# vars file for setup_shell
+    os_env:
+      - key: EDITOR
+        value: vi
+      - key: TERM
+        value: xterm

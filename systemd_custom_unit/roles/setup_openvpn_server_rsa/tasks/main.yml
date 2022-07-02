@@ -1,0 +1,18 @@
+---
+# tasks file for setup_openvpn_server
+- name: fetching easy-rsa 
+  ansible.builtin.git:
+    repo: https://github.com/OpenVPN/easy-rsa.git
+    dest: "{{ openrsa_dir }}"
+    single_branch: yes
+    version: master
+- name: setup onep-rsa
+  ansible.builtin.shell: 
+    cmd: sh easyrsa clean-all
+    chdir: "{{ openrsa_dir }}/easyrsa3"
+- name: setup onep-rsa2
+  ansible.builtin.shell: | 
+    /bin/bash easyrsa init-pki
+    chdir: "{{ openrsa_dir }}/easyrsa3"
+
+

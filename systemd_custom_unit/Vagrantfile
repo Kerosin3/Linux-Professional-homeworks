@@ -1,0 +1,91 @@
+# -*- mode: ruby -*-
+# vim: set ft=ruby :
+
+MACHINES = {
+:testmachine=> {
+        :box_name => "centos/7",
+        :hostname => "testmachine",
+        :os_type => "centos",
+        :ssh_port => 2210,
+        :ram => 1024,
+        :cpu => 2,
+        :net => [
+          {ip: '172.16.1.1', adapter: 2, netmask: "255.255.255.0", virtualbox__intnet: "test_net"},
+                ]
+        }       ,
+
+
+}
+
+Vagrant.configure("2") do |config|
+
+  MACHINES.each do |boxname, boxconfig|
+
+    config.vm.define boxname do |box|
+
+        box.vm.box = boxconfig[:box_name]
+        box.vm.box_version = boxconfig[:box_version]
+        box.vm.hostname = boxconfig[:hostname]
+        box.vbguest.auto_update = false
+        box.ssh.keys_only = true
+        box.ssh.insert_key = true
+        box.vm.network :forwarded_port,host:boxconfig[:ssh_port], guest:22,id:'ssh'
+        box.vm.provider "virtualbox" do |vb_machine_settings|
+                vb_machine_settings.customize ["modifyvm", :id, "--memory", boxconfig[:ram]]
+                vb_machine_settings.customize ["modifyvm", :id, "--cpus", boxconfig[:cpu]]
+            end
+
+        boxconfig[:net].each do |ipconf|
+          box.vm.network "private_network", ipconf
+        end
+        
+        if boxconfig.key?(:public)
+          box.vm.network "public_network", boxconfig[:public]
+        end
+
+#               
+        case boxconfig[:os_type]
+
+        when "centos"
+        box.vm.provision "shell", inline: <<-SHELL
+                ssh-keygen -t rsa -N '' -f ~/.ssh/id_rsa <<< y
+                cp /root/.ssh/id_rsa /home/vagrant/id.rsa
+        SHELL
+#        box.vm.provision :shell, :inline => "mkdir -p ~root/.ssh; cp ~vagrant/.ssh/auth* ~root/.ssh"
+        box.vm.provision :shell, :inline => "sed -i '65s/PasswordAuthentication no/PasswordAuthentication yes/g' /etc/ssh/sshd_config"
+        box.vm.provision :shell, :inline => "systemctl enable sshd"
+        box.vm.provision :shell, :inline => "systemctl restart sshd"
+        box.vm.provision "shell", inline: <<-SHELL
+                 yum update
+                 yum install epel-release centos-release-scl -y
+        SHELL
+
+
+        when "ubuntu"
+        box.vm.provision "shell", inline: <<-SHELL
+                ssh-keygen -t rsa -N '' -f ~/.ssh/id_rsa <<< y
+                curl -s https://deb.frrouting.org/frr/keys.asc | sudo apt-key add -
+                echo deb https://deb.frrouting.org/frr $(lsb_release -s -c) frr-stable > /etc/apt/sources.list.d/frr.list
+                apt update -y
+                apt install net-tools sshpass -y
+        SHELL
+
+        end
+        #box.vm.provision "ansible" do |ansible|
+        #  ansible.playbook = "main.yaml"
+        #end
+        case boxname.to_s
+
+        when "testmachine" 
+            box.vm.provision "ansible", run: "always" do |ansible|
+            ansible.playbook = "setup_testmachine.yaml"
+          end
+
+        end
+        end        
+
+      end
+
+  end
+  
+  
