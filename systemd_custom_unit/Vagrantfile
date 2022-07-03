@@ -82,6 +82,13 @@ Vagrant.configure("2") do |config|
           end
 
         end
+        box.vm.provision "shell", inline: <<-SHELL
+                 touch /var/log/watchlog.log
+                 echo "dasdasdasdasd dasd \n da fasdasd thest ALERT adsad \n asdasd" >> /var/log/watchlog.log
+
+        SHELL
+
+
         end        
 
       end

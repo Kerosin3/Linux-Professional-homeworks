@@ -1,0 +1,7 @@
+---
+- name: Init default setup on server
+  hosts: testmachine
+  become: yes
+
+  roles:
+    - custom-unit

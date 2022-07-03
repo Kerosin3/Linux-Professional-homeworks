@@ -1,0 +1,7 @@
+[Unit]
+Description= this is a test unit file
+
+[Service]
+Type=oneshot
+EnvironmentFile=/etc/sysconfig/watchlog
+ExecStart=/opt/watchlog.sh $WORD $LOG

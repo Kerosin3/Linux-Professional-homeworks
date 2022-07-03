@@ -1,0 +1,12 @@
+[Unit]
+Description=This timer runs watchlog unit every 30 sec
+
+[Timer]
+#run every 30 sec
+OnUnitActiveSec=30
+OnBootSec=30
+AccuracySec=1us
+Unit=watchlog.service
+
+[Install]
+WantedBy=multi-user.target

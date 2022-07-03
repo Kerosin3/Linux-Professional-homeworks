@@ -1,0 +1,37 @@
+---
+# tasks file for custom-unit
+- name: copy script
+  ansible.builtin.copy:
+    src: watchlog.sh
+    dest: /opt/watchlog.sh
+    owner: root
+    mode: '0774'
+- name: copy env settings
+  ansible.builtin.copy:
+    src: environment_settings
+    dest: /etc/sysconfig/watchlog
+    owner: root
+    mode: '0644'
+- name: copy unit file
+  ansible.builtin.copy:
+    src: watchlog.service
+    dest: /etc/systemd/system/watchlog.service
+    owner: root
+    mode: '0644'
+- name: copy unit timer
+  ansible.builtin.copy:
+    src: watchlog.timer
+    dest: /etc/systemd/system/watchlog.timer
+    owner: root
+    mode: '0644'
+- name: reload daemons
+  ansible.builtin.shell: systemctl daemon-reload
+- name: start service
+  ansible.builtin.shell: systemctl enable watchlog.timer
+- name: start service now
+  ansible.builtin.shell: systemctl start watchlog.timer
+
+
+
+
+
