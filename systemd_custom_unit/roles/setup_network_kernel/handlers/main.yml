@@ -1,7 +1,0 @@
----
-# handlers file for setup_network_kernel
-- name: restart_network
-  service:
-      name=network
-      state=restarted
-

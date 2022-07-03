@@ -1,4 +1,0 @@
----
-# vars file for setup_openvpn_server
-openrsa_dir: "/home/vagrant/openvpn_easy_rsa"
-

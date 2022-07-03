@@ -1,0 +1,61 @@
+---
+# tasks file for edit_swawn
+- name: install required packages
+  ansible.builtin.package:
+    name: 
+      - spawn-fcgi 
+      - php 
+        #   - php-climod_fcgid 
+      - httpd
+    state: installed
+- name: copy unit file
+  ansible.builtin.copy:
+    src: spawn-fcgi.service
+    dest: /etc/systemd/system/spawn-fcgi.service
+    owner: root
+    mode: '0644'
+- name: copy unit file httpd
+  ansible.builtin.copy:
+    src: httpdapache.service
+    dest: /etc/systemd/system/httpdapache.service
+    owner: root
+    mode: '0644'
+- name: copy first config
+  ansible.builtin.copy:
+    src: httpd-first
+    dest: /etc/sysconfig/httpd-first
+    owner: root
+    mode: '0644'
+- name: copy second config
+  ansible.builtin.copy:
+    src: httpd-second
+    dest: /etc/sysconfig/httpd-second
+    owner: root
+    mode: '0644'
+- name: copy httpd first config
+  ansible.builtin.copy:
+    src: first.conf
+    dest: /etc/httpd/conf/first.conf
+    owner: root
+    mode: '0644'
+- name: copy httpd second config
+  ansible.builtin.copy:
+    src: second.conf
+    dest: /etc/httpd/conf/second.conf
+    owner: root
+    mode: '0644'
+- name: "comment out"
+  ansible.builtin.replace:
+    path: /etc/sysconfig/spawn-fcgi
+    regexp: '#SOCKET'
+    replace: 'SOCKET'
+- name: "comment out 2"
+  ansible.builtin.replace:
+    path: /etc/sysconfig/spawn-fcgi
+    regexp: '#OPTIONS'
+    replace: 'OPTIONS'
+- name: reload daemons
+  ansible.builtin.shell: systemctl daemon-reload
+- name: start spawn-fcgi
+  ansible.builtin.shell: systemctl start spawn-fcgi
+
