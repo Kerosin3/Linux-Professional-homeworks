@@ -17,7 +17,7 @@
 - name: copy unit file httpd
   ansible.builtin.copy:
     src: httpdapache.service
-    dest: /etc/systemd/system/httpdapache.service
+    dest: /etc/systemd/system/httpdapache@.service
     owner: root
     mode: '0644'
 - name: copy first config
