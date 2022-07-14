@@ -12,6 +12,9 @@ ExecReload=/usr/sbin/httpd $OPTIONS -k greceful
 ExecStop=/bin/kill -WINCH ${MAINPID}
 KillSignal=SIGCONT
 PrivateTmp=true
+NotifyAccess=All
+ExecPreStart=[[ -f /var/run/httpd/httpd.pid ]] && /bin/rm -f /var/run/httpd/httpd.pid
+
 
 [Install]
 WantedBy=multi-user.target
